@@ -71,7 +71,9 @@ ln.ServicesRunner().Register(svc)
 ```go
 // init
 pingPongSvc := service.New(
-    service.WithService(pingpong.New(logger, time.Second*5)),
+    service.WithService(
+        pingpong.New(logger, pingpong.WithTimeout(time.Second*5)),
+    ),
 )
 
 // register in launcher
@@ -81,7 +83,7 @@ ln.ServicesRunner().Register(pingPongSvc)
 You can also register any service that implements the following interface
 
 ```go
-type Service interface {
+type IService interface {
     Name() string
     Start(ctx context.Context) error
     Stop(ctx context.Context) error
@@ -89,15 +91,11 @@ type Service interface {
 
 type myService struct {}
 
-func (s *myService) Name() string { return "my-custom service" }
+func (s *myService) Name() string { return "my-service" }
 
-func (s *myService) Start(ctx context.Context) error {
-    return nil
-}
+func (s *myService) Start(ctx context.Context) error { return nil }
 
-func (s *myService) Stop(ctx context.Context) error {
-    return nil
-}
+func (s *myService) Stop(ctx context.Context) error { return nil }
 
 func main() {
     // init service

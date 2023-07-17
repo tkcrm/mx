@@ -8,22 +8,38 @@ import (
 	"github.com/tkcrm/micro/service"
 )
 
-var defaultPingPongTimeout = time.Minute * 5
+var (
+	defaultTimeout = time.Minute * 5
+	defaultMessage = "ping-pong"
+)
 
 type PingPong struct {
-	log     logger
+	log logger
+
+	// default: 5 minute
 	timeout time.Duration
+	// default: ping-pong
+	message string
 
 	once sync.Once
 	done chan struct{}
 }
 
-func New(logger logger, timeout time.Duration) *PingPong {
-	if timeout == 0 {
-		timeout = defaultPingPongTimeout
+func New(logger logger, opts ...Option) *PingPong {
+	pp := &PingPong{log: logger, done: make(chan struct{})}
+	for _, o := range opts {
+		o(pp)
 	}
 
-	return &PingPong{log: logger, timeout: timeout, done: make(chan struct{})}
+	if pp.timeout == 0 {
+		pp.timeout = defaultTimeout
+	}
+
+	if pp.message == "" {
+		pp.message = defaultMessage
+	}
+
+	return pp
 }
 
 // Name of the service
@@ -41,7 +57,7 @@ func (p *PingPong) Start(ctx context.Context) error {
 		case <-p.done:
 			return nil
 		case <-timer.C:
-			p.log.Info("ping-pong")
+			p.log.Info(p.message)
 			timer.Reset(p.timeout)
 		}
 	}
