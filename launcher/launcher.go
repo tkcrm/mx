@@ -25,7 +25,6 @@ type ILauncher interface {
 type launcher struct {
 	opts Options
 
-	stop     chan struct{}
 	cancelFn context.CancelFunc
 
 	servicesRunner *servicesRunner
@@ -34,7 +33,6 @@ type launcher struct {
 func New(opts ...Option) ILauncher {
 	l := &launcher{
 		opts: newOptions(opts...),
-		stop: make(chan struct{}, 1),
 	}
 
 	ctx, cancel := context.WithCancel(l.opts.Context)
@@ -81,8 +79,6 @@ func (l *launcher) Run() error {
 	// wait on services error
 	case err := <-errChan:
 		return err
-	// wait on stop func
-	case <-l.stop:
 	// wait on kill signal
 	case <-ch:
 	// wait on context cancel
@@ -126,7 +122,6 @@ func (l *launcher) Run() error {
 }
 
 func (l *launcher) Stop() {
-	l.stop <- struct{}{}
 	l.cancelFn()
 }
 

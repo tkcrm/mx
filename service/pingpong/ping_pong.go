@@ -4,6 +4,8 @@ import (
 	"context"
 	"sync"
 	"time"
+
+	"github.com/tkcrm/micro/service"
 )
 
 var defaultPingPongTimeout = time.Minute * 5
@@ -24,10 +26,10 @@ func New(logger logger, timeout time.Duration) *PingPong {
 	return &PingPong{log: logger, timeout: timeout, done: make(chan struct{})}
 }
 
-// Name of the service.
+// Name of the service
 func (p *PingPong) Name() string { return "ping-pong" }
 
-// Start ping-pong service.
+// Start ping-pong service
 func (p *PingPong) Start(ctx context.Context) error {
 	timer := time.NewTimer(p.timeout)
 	defer timer.Stop()
@@ -45,10 +47,12 @@ func (p *PingPong) Start(ctx context.Context) error {
 	}
 }
 
-// Stop ping-pong service.
+// Stop ping-pong service
 func (p *PingPong) Stop(_ context.Context) error {
 	p.once.Do(func() {
 		close(p.done)
 	})
 	return nil
 }
+
+var _ service.IService = (*PingPong)(nil)
