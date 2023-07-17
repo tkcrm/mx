@@ -8,6 +8,7 @@ import (
 
 	"github.com/tkcrm/micro/service"
 	signalutil "github.com/tkcrm/micro/util/signal"
+	"golang.org/x/sync/errgroup"
 )
 
 type ILauncher interface {
@@ -40,7 +41,7 @@ func New(opts ...Option) ILauncher {
 	l.opts.Context = ctx
 	l.cancelFn = cancel
 
-	l.servicesRunner = newServicesRunner(l.opts.Context)
+	l.servicesRunner = newServicesRunner(l.opts.Context, l.opts.logger)
 
 	return l
 }
@@ -58,7 +59,7 @@ func (l *launcher) Run() error {
 	for i := range l.servicesRunner.Services() {
 		go func(svc *service.Service) {
 			if err := svc.Start(); err != nil {
-				err := fmt.Errorf("failed to start service %s: %w", svc.Name(), err)
+				err := fmt.Errorf("failed to start service [%s]: %w", svc.Name(), err)
 				errChan <- err
 			}
 		}(l.servicesRunner.Services()[i])
@@ -98,10 +99,20 @@ func (l *launcher) Run() error {
 	}
 
 	// stop services
-	for _, svc := range l.servicesRunner.Services() {
-		if err := svc.Stop(); err != nil {
-			l.opts.logger.Errorf("failed to stop service %s: %s", svc.Name(), err)
-		}
+	g := new(errgroup.Group)
+	for i := range l.servicesRunner.Services() {
+		svc := l.servicesRunner.Services()[i]
+		g.Go(func() error {
+			if err := svc.Stop(); err != nil {
+				l.opts.logger.Errorf("failed to stop service [%s] error: %s", svc.Name(), err)
+			}
+			return nil
+		})
+	}
+
+	// wait stop group
+	if err := g.Wait(); err != nil {
+		return err
 	}
 
 	// after stop

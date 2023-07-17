@@ -14,18 +14,18 @@ const (
 type Options struct {
 	logger logger.Logger
 
-	Name string
-
+	Name    string
 	Enabled bool
 
 	Start func(ctx context.Context) error
 	Stop  func(ctx context.Context) error
 
 	// Before and After funcs
-	BeforeStart []func() error
-	BeforeStop  []func() error
-	AfterStart  []func() error
-	AfterStop   []func() error
+	BeforeStart        []func() error
+	BeforeStop         []func() error
+	AfterStart         []func() error
+	AfterStartFinished []func() error
+	AfterStop          []func() error
 
 	Signal bool
 
@@ -36,12 +36,14 @@ func newOptions(opts ...Option) Options {
 	opt := Options{
 		logger: logger.New(),
 
-		Name: defaultServiceName,
+		Name:    defaultServiceName,
+		Enabled: true,
 
-		BeforeStart: make([]func() error, 0),
-		BeforeStop:  make([]func() error, 0),
-		AfterStart:  make([]func() error, 0),
-		AfterStop:   make([]func() error, 0),
+		BeforeStart:        make([]func() error, 0),
+		BeforeStop:         make([]func() error, 0),
+		AfterStart:         make([]func() error, 0),
+		AfterStartFinished: make([]func() error, 0),
+		AfterStop:          make([]func() error, 0),
 
 		Signal: true,
 	}
@@ -141,6 +143,13 @@ func BeforeStop(fn func() error) Option {
 func AfterStart(fn func() error) Option {
 	return func(o *Options) {
 		o.AfterStart = append(o.AfterStart, fn)
+	}
+}
+
+// AfterStartFinished run funcs after was finished service start func
+func AfterStartFinished(fn func() error) Option {
+	return func(o *Options) {
+		o.AfterStartFinished = append(o.AfterStart, fn)
 	}
 }
 

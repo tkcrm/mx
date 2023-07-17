@@ -10,7 +10,8 @@ import (
 )
 
 type Service struct {
-	opts Options
+	opts      Options
+	isStopped bool
 }
 
 func New(opts ...Option) *Service {
@@ -31,11 +32,11 @@ func (s *Service) Start() error {
 	}
 
 	if !s.opts.Enabled {
-		s.opts.logger.Infoln("service", s.Name(), "was skipped because it is disabled")
+		s.opts.logger.Infof("service [%s] was skipped because it is disabled", s.Name())
 		return nil
 	}
 
-	s.opts.logger.Infoln("starting service", s.Name())
+	s.opts.logger.Infof("starting service [%s]", s.Name())
 
 	for _, fn := range s.opts.BeforeStart {
 		if err := fn(); err != nil {
@@ -71,6 +72,12 @@ func (s *Service) Start() error {
 	case <-s.opts.Context.Done():
 	}
 
+	for _, fn := range s.opts.AfterStartFinished {
+		if err := fn(); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -78,6 +85,11 @@ func (s *Service) Stop() error {
 	if s.opts.Stop == nil {
 		return nil
 	}
+
+	if s.isStopped {
+		return nil
+	}
+	s.isStopped = true
 
 	var stopErr error
 
@@ -87,16 +99,17 @@ func (s *Service) Stop() error {
 		}
 	}
 
-	ctx, cancel := context.WithTimeout(s.opts.Context, time.Second*10)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	//s.opts.logger.Infoln("stopping service", s.Name())
+	s.opts.logger.Infoln("stopping service", s.Name())
 
 	var errChan = make(chan error, 1)
 	var stopChan = make(chan struct{}, 1)
 	go func() {
 		if err := s.opts.Stop(ctx); err != nil {
 			errChan <- err
+			return
 		}
 		stopChan <- struct{}{}
 	}()
@@ -104,14 +117,14 @@ func (s *Service) Stop() error {
 	select {
 	// success stop
 	case <-stopChan:
+		s.opts.logger.Infof("service [%s] was stopped", s.Name())
 	// stop with error
 	case err := <-errChan:
 		return err
 	// stop by context
 	case <-ctx.Done():
+		s.opts.logger.Infof("failed to stop service [%s]. Stopping by context", s.Name())
 	}
-
-	s.opts.logger.Infoln("service", s.Name(), "stopped")
 
 	for _, fn := range s.opts.AfterStop {
 		if err := fn(); err != nil {
