@@ -101,12 +101,12 @@ func (s *myService) Stop(ctx context.Context) error {
 
 func main() {
     // init service
-    service.New(
+    svc := service.New(
         service.WithService(&myService{}),
     )
 
     // register service in launcher
-    ln.ServicesRunner().Register(pingPongSvc)
+    ln.ServicesRunner().Register(svc)
 }
 ```
 
