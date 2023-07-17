@@ -16,7 +16,7 @@ A Go microservices framework with runtime launcher and services runner
 - [ ] GRPC transport
 - [ ] Fiber transport
 
-## Hot to use
+## How to use
 
 Repo with [example](https://github.com/tkcrm/micro-example)
 
