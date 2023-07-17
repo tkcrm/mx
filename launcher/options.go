@@ -80,29 +80,29 @@ func WithLogger(l logger.Logger) Option {
 
 // Before and Afters
 
-// BeforeStart run funcs before service starts
-func BeforeStart(fn func() error) Option {
+// WithBeforeStart run funcs before service starts
+func WithBeforeStart(fn func() error) Option {
 	return func(o *Options) {
 		o.BeforeStart = append(o.BeforeStart, fn)
 	}
 }
 
-// BeforeStop run funcs before service stops
-func BeforeStop(fn func() error) Option {
+// WithBeforeStop run funcs before service stops
+func WithBeforeStop(fn func() error) Option {
 	return func(o *Options) {
 		o.BeforeStop = append(o.BeforeStop, fn)
 	}
 }
 
-// AfterStart run funcs after service starts
-func AfterStart(fn func() error) Option {
+// WithAfterStart run funcs after service starts
+func WithAfterStart(fn func() error) Option {
 	return func(o *Options) {
 		o.AfterStart = append(o.AfterStart, fn)
 	}
 }
 
-// AfterStop run funcs after service stops
-func AfterStop(fn func() error) Option {
+// WithAfterStop run funcs after service stops
+func WithAfterStop(fn func() error) Option {
 	return func(o *Options) {
 		o.AfterStop = append(o.AfterStop, fn)
 	}

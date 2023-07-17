@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/tkcrm/micro/logger"
 )
@@ -30,6 +31,30 @@ type Options struct {
 	Signal bool
 
 	Context context.Context
+}
+
+func (s *Options) Validate() error {
+	if s.logger == nil {
+		return fmt.Errorf("undefined logger")
+	}
+
+	if s.Name == "" {
+		return fmt.Errorf("empty name")
+	}
+
+	if s.Start == nil {
+		return fmt.Errorf("undefined Start func")
+	}
+
+	if s.Stop == nil {
+		return fmt.Errorf("undefined Stop func")
+	}
+
+	if s.Context == nil {
+		return fmt.Errorf("undefined context")
+	}
+
+	return nil
 }
 
 func newOptions(opts ...Option) Options {
@@ -125,36 +150,36 @@ func WithService(svc any) Option {
 
 // Before and Afters
 
-// BeforeStart run funcs before service starts
-func BeforeStart(fn func() error) Option {
+// WithBeforeStart run funcs before service starts
+func WithBeforeStart(fn func() error) Option {
 	return func(o *Options) {
 		o.BeforeStart = append(o.BeforeStart, fn)
 	}
 }
 
-// BeforeStop run funcs before service stops
-func BeforeStop(fn func() error) Option {
+// WithBeforeStop run funcs before service stops
+func WithBeforeStop(fn func() error) Option {
 	return func(o *Options) {
 		o.BeforeStop = append(o.BeforeStop, fn)
 	}
 }
 
-// AfterStart run funcs after service starts
-func AfterStart(fn func() error) Option {
+// WithAfterStart run funcs after service starts
+func WithAfterStart(fn func() error) Option {
 	return func(o *Options) {
 		o.AfterStart = append(o.AfterStart, fn)
 	}
 }
 
-// AfterStartFinished run funcs after was finished service start func
-func AfterStartFinished(fn func() error) Option {
+// WithAfterStartFinished run funcs after was finished service start func
+func WithAfterStartFinished(fn func() error) Option {
 	return func(o *Options) {
 		o.AfterStartFinished = append(o.AfterStart, fn)
 	}
 }
 
-// AfterStop run funcs after service stops
-func AfterStop(fn func() error) Option {
+// WithAfterStop run funcs after service stops
+func WithAfterStop(fn func() error) Option {
 	return func(o *Options) {
 		o.AfterStop = append(o.AfterStop, fn)
 	}

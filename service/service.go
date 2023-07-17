@@ -9,6 +9,12 @@ import (
 	signalutil "github.com/tkcrm/micro/util/signal"
 )
 
+type IService interface {
+	Name() string
+	Start(ctx context.Context) error
+	Stop(ctx context.Context) error
+}
+
 type Service struct {
 	opts      Options
 	isStopped bool

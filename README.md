@@ -1,6 +1,6 @@
-# GO micro
+# Micro
 
-A Go microservices framework with runtime launcher
+A Go microservices framework with runtime launcher and services runner
 
 ## Features
 
@@ -36,11 +36,11 @@ ln := launcher.New(
     launcher.WithLogger(logger),
     launcher.WithVersion(version),
     launcher.WithContext(context.Background()),
-    launcher.AfterStart(func() error {
+    launcher.WithAfterStart(func() error {
         logger.Infoln("app", appName, "was started")
         return nil
     }),
-    launcher.AfterStop(func() error {
+    launcher.WithAfterStop(func() error {
         logger.Infoln("app", appName, "was stopped")
         return nil
     }),
@@ -76,6 +76,38 @@ pingPongSvc := service.New(
 
 // register in launcher
 ln.ServicesRunner().Register(pingPongSvc)
+```
+
+You can also register any service that implements the following interface
+
+```go
+type Service interface {
+    Name() string
+    Start(ctx context.Context) error
+    Stop(ctx context.Context) error
+}
+
+type myService struct {}
+
+func (s *myService) Name() string { return "my-custom service" }
+
+func (s *myService) Start(ctx context.Context) error {
+    return nil
+}
+
+func (s *myService) Stop(ctx context.Context) error {
+    return nil
+}
+
+func main() {
+    // init service
+    service.New(
+        service.WithService(&myService{}),
+    )
+
+    // register service in launcher
+    ln.ServicesRunner().Register(pingPongSvc)
+}
 ```
 
 ### Start launcher and all services with graceful shutdown

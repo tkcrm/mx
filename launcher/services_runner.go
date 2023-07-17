@@ -40,15 +40,23 @@ func (s *servicesRunner) registerService(svc *service.Service) {
 		return
 	}
 
-	// skip service if it disabled
-	if !svc.Options().Enabled {
-		s.logger.Infof("service [%s] was skipped because it is disabled", svc.Name())
+	svcOpts := svc.Options()
+
+	// set context
+	if svcOpts.Context == nil {
+		svcOpts.Context = s.ctx
+	}
+
+	// validate service options
+	if err := svcOpts.Validate(); err != nil {
+		s.logger.Errorf("service [%s] was skipped because it has validation error: %s", svc.Name(), err)
 		return
 	}
 
-	// set context
-	if svc.Options().Context == nil {
-		svc.Options().Context = s.ctx
+	// skip service if it disabled
+	if !svcOpts.Enabled {
+		s.logger.Infof("service [%s] was skipped because it is disabled", svc.Name())
+		return
 	}
 
 	s.services = append(s.services, svc)
