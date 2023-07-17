@@ -23,6 +23,8 @@ type Logger interface {
 	Infof(template string, args ...any)
 	Infow(msg string, keysAndValues ...any)
 
+	Infoln(...any)
+
 	Warn(...any)
 	Warnf(template string, args ...any)
 	Warnw(msg string, keysAndValues ...any)
