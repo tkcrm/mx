@@ -70,11 +70,7 @@ ln.ServicesRunner().Register(svc)
 
 ```go
 // init
-pingPongSvc := service.New(
-    service.WithService(
-        pingpong.New(logger, pingpong.WithTimeout(time.Second*5)),
-    ),
-)
+pingPongSvc := service.New(service.WithService(pingpong.New(logger)))
 
 // register in launcher
 ln.ServicesRunner().Register(pingPongSvc)

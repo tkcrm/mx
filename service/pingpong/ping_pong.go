@@ -25,6 +25,8 @@ type PingPong struct {
 	done chan struct{}
 }
 
+// New return ping pong instance with default timeout 5 min
+// and message ping-pong
 func New(logger logger, opts ...Option) *PingPong {
 	pp := &PingPong{log: logger, done: make(chan struct{})}
 	for _, o := range opts {
