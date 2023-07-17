@@ -78,7 +78,7 @@ pingPongSvc := service.New(
 ln.ServicesRunner().Register(pingPongSvc)
 ```
 
-Also you can register any service thats implement next interface
+You can also register any service that implements the following interface
 
 ```go
 type Service interface {
