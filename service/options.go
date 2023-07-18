@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/tkcrm/micro/logger"
 )
@@ -18,8 +19,8 @@ type Options struct {
 	Name    string
 	Enabled bool
 
-	Start func(ctx context.Context) error
-	Stop  func(ctx context.Context) error
+	StartFn func(ctx context.Context) error
+	StopFn  func(ctx context.Context) error
 
 	// Before and After funcs
 	BeforeStart        []func() error
@@ -31,6 +32,9 @@ type Options struct {
 	Signal bool
 
 	Context context.Context
+
+	// Default 10 seconds
+	ShutdownTimeout time.Duration
 }
 
 func (s *Options) Validate() error {
@@ -42,11 +46,11 @@ func (s *Options) Validate() error {
 		return fmt.Errorf("empty name")
 	}
 
-	if s.Start == nil {
+	if s.StartFn == nil {
 		return fmt.Errorf("undefined Start func")
 	}
 
-	if s.Stop == nil {
+	if s.StopFn == nil {
 		return fmt.Errorf("undefined Stop func")
 	}
 
@@ -71,6 +75,8 @@ func newOptions(opts ...Option) Options {
 		AfterStop:          make([]func() error, 0),
 
 		Signal: true,
+
+		ShutdownTimeout: time.Second * 10,
 	}
 
 	for _, o := range opts {
@@ -112,19 +118,25 @@ func WithLogger(l logger.Logger) Option {
 
 func WithStart(fn func(context.Context) error) Option {
 	return func(o *Options) {
-		o.Start = fn
+		o.StartFn = fn
 	}
 }
 
 func WithStop(fn func(context.Context) error) Option {
 	return func(o *Options) {
-		o.Stop = fn
+		o.StopFn = fn
 	}
 }
 
 func WithEnabled(v bool) Option {
 	return func(o *Options) {
 		o.Enabled = v
+	}
+}
+
+func WithShutdownTimeout(v time.Duration) Option {
+	return func(o *Options) {
+		o.ShutdownTimeout = v
 	}
 }
 
@@ -135,11 +147,11 @@ func WithService(svc any) Option {
 		}
 
 		if impl, ok := svc.(interface{ Start(context.Context) error }); ok {
-			o.Start = impl.Start
+			o.StartFn = impl.Start
 		}
 
 		if impl, ok := svc.(interface{ Stop(context.Context) error }); ok {
-			o.Stop = impl.Stop
+			o.StopFn = impl.Stop
 		}
 
 		if impl, ok := svc.(Enabler); ok {

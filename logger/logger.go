@@ -59,3 +59,8 @@ func initZapLogger(level LogLevel, format LogFormat, consoleColored bool, timeKe
 func New(opts ...Option) Logger {
 	return newInternalLogger(opts...)
 }
+
+// NewSugared - init new sugared logger with options
+func NewExtended(opts ...Option) ExtendedLogger {
+	return newInternalLogger(opts...)
+}

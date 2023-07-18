@@ -5,7 +5,7 @@ import (
 )
 
 type logger struct {
-	*SugaredLogger
+	*sugaredLogger
 }
 
 func newInternalLogger(opts ...Option) *logger {
@@ -32,14 +32,14 @@ func newInternalLogger(opts ...Option) *logger {
 	}
 
 	return &logger{
-		SugaredLogger: l.Sugar(),
+		sugaredLogger: l.Sugar(),
 	}
 }
 
-func (l logger) With(args ...any) Logger {
-	return &logger{l.SugaredLogger.With(args...)}
+func (l logger) With(args ...any) ExtendedLogger {
+	return &logger{l.sugaredLogger.With(args...)}
 }
 
-func (l *logger) Sugar() *SugaredLogger {
-	return l.SugaredLogger
+func (l *logger) Sugar() *sugaredLogger {
+	return l.sugaredLogger
 }

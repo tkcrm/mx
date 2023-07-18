@@ -4,7 +4,6 @@ import (
 	"context"
 	"os"
 	"os/signal"
-	"time"
 
 	signalutil "github.com/tkcrm/micro/util/signal"
 )
@@ -16,7 +15,9 @@ type IService interface {
 }
 
 type Service struct {
-	opts      Options
+	opts Options
+
+	isStarted bool
 	isStopped bool
 }
 
@@ -33,7 +34,7 @@ func (s *Service) Options() *Options { return &s.opts }
 func (s *Service) String() string { return "micro" }
 
 func (s *Service) Start() error {
-	if s.opts.Start == nil {
+	if s.opts.StartFn == nil {
 		return nil
 	}
 
@@ -41,6 +42,13 @@ func (s *Service) Start() error {
 		s.opts.logger.Infof("service [%s] was skipped because it is disabled", s.Name())
 		return nil
 	}
+
+	// skip if service already started
+	if s.isStarted {
+		return nil
+	}
+	s.isStarted = true
+	s.isStopped = false
 
 	s.opts.logger.Infof("starting service [%s]", s.Name())
 
@@ -52,7 +60,7 @@ func (s *Service) Start() error {
 
 	var errChan = make(chan error, 1)
 	go func() {
-		if err := s.opts.Start(s.opts.Context); err != nil {
+		if err := s.opts.StartFn(s.opts.Context); err != nil {
 			errChan <- err
 		}
 	}()
@@ -88,13 +96,15 @@ func (s *Service) Start() error {
 }
 
 func (s *Service) Stop() error {
-	if s.opts.Stop == nil {
+	if s.opts.StopFn == nil {
 		return nil
 	}
 
-	if s.isStopped {
+	// skip if service already stopped or not started
+	if s.isStopped || !s.isStarted {
 		return nil
 	}
+	s.isStarted = false
 	s.isStopped = true
 
 	var stopErr error
@@ -105,7 +115,7 @@ func (s *Service) Stop() error {
 		}
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	ctx, cancel := context.WithTimeout(context.Background(), s.opts.ShutdownTimeout)
 	defer cancel()
 
 	s.opts.logger.Infoln("stopping service", s.Name())
@@ -113,7 +123,7 @@ func (s *Service) Stop() error {
 	var errChan = make(chan error, 1)
 	var stopChan = make(chan struct{}, 1)
 	go func() {
-		if err := s.opts.Stop(ctx); err != nil {
+		if err := s.opts.StopFn(ctx); err != nil {
 			errChan <- err
 			return
 		}
