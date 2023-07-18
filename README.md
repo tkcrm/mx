@@ -15,7 +15,7 @@ A Go microservices framework with runtime launcher and services runner
 - [x] Ping pong service
 - [ ] GRPC transport
 - [ ] Fiber transport
-- [ ] Config loader
+- [x] Config loader
 
 ## How to use
 
