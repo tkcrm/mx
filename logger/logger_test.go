@@ -16,7 +16,7 @@ func TestLogger(t *testing.T) {
 }
 
 func Test_LoggerWith(t *testing.T) {
-	l := logger.New(
+	l := logger.NewExtended(
 		logger.WithAppName("test"),
 		logger.WithLogLevel(logger.LogLevelDebug),
 		logger.WithLogFormat(logger.LoggerFormatConsole),
