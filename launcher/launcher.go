@@ -6,8 +6,8 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/tkcrm/micro/service"
-	signalutil "github.com/tkcrm/micro/util/signal"
+	"github.com/tkcrm/mx/service"
+	signalutil "github.com/tkcrm/mx/util/signal"
 	"golang.org/x/sync/errgroup"
 )
 

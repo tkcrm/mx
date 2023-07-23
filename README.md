@@ -1,4 +1,4 @@
-# Micro
+# MX
 
 A Go microservices framework with runtime launcher and services runner
 
@@ -19,13 +19,13 @@ A Go microservices framework with runtime launcher and services runner
 
 ## How to use
 
-Repo with [example](https://github.com/tkcrm/micro-example)
+Repo with [example](https://github.com/tkcrm/mx-example)
 
 ### Init launcher
 
 ```go
 var version = "local"
-var appName = "micro-example"
+var appName = "mx-example"
 
 logger := logger.New(
     logger.WithAppVersion(version),
