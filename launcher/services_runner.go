@@ -3,8 +3,8 @@ package launcher
 import (
 	"context"
 
-	"github.com/tkcrm/micro/logger"
-	"github.com/tkcrm/micro/service"
+	"github.com/tkcrm/mx/logger"
+	"github.com/tkcrm/mx/service"
 )
 
 type IServicesRunner interface {

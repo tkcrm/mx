@@ -5,7 +5,7 @@ import (
 	"os"
 	"os/signal"
 
-	signalutil "github.com/tkcrm/micro/util/signal"
+	signalutil "github.com/tkcrm/mx/util/signal"
 )
 
 type IService interface {
@@ -31,7 +31,7 @@ func (s *Service) Name() string { return s.opts.Name }
 
 func (s *Service) Options() *Options { return &s.opts }
 
-func (s *Service) String() string { return "micro" }
+func (s *Service) String() string { return "mx" }
 
 func (s *Service) Start() error {
 	if s.opts.StartFn == nil {

@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/tkcrm/micro/logger"
+	"github.com/tkcrm/mx/logger"
 )
 
 const (
 	defaultServiceName = "unknown"
 )
 
-// Options for micro service
+// Options for service
 type Options struct {
 	logger logger.Logger
 

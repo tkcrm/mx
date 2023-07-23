@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tkcrm/micro/service"
+	"github.com/tkcrm/mx/service"
 )
 
 var (

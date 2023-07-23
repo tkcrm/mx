@@ -3,7 +3,7 @@ package launcher
 import (
 	"context"
 
-	"github.com/tkcrm/micro/logger"
+	"github.com/tkcrm/mx/logger"
 )
 
 type Option func(*Options)
