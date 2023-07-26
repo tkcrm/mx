@@ -48,34 +48,24 @@ func newOptions(opts ...Option) Options {
 
 // Name of the launcher
 func WithName(n string) Option {
-	return func(o *Options) {
-		o.Name = n
-	}
+	return func(o *Options) { o.Name = n }
 }
 
 // Version of the launcher
 func WithVersion(v string) Option {
-	return func(o *Options) {
-		o.Version = v
-	}
+	return func(o *Options) { o.Version = v }
 }
 
 func WithContext(ctx context.Context) Option {
-	return func(o *Options) {
-		o.Context = ctx
-	}
+	return func(o *Options) { o.Context = ctx }
 }
 
 func WithSignal(b bool) Option {
-	return func(o *Options) {
-		o.Signal = b
-	}
+	return func(o *Options) { o.Signal = b }
 }
 
 func WithLogger(l logger.Logger) Option {
-	return func(o *Options) {
-		o.logger = l
-	}
+	return func(o *Options) { o.logger = l }
 }
 
 // Before and Afters

@@ -39,7 +39,7 @@ func (s *Service) Start() error {
 	}
 
 	if !s.opts.Enabled {
-		s.opts.logger.Infof("service [%s] was skipped because it is disabled", s.Name())
+		s.opts.Logger.Infof("service [%s] was skipped because it is disabled", s.Name())
 		return nil
 	}
 
@@ -50,7 +50,7 @@ func (s *Service) Start() error {
 	s.isStarted = true
 	s.isStopped = false
 
-	s.opts.logger.Infof("starting service [%s]", s.Name())
+	s.opts.Logger.Infof("starting service [%s]", s.Name())
 
 	for _, fn := range s.opts.BeforeStart {
 		if err := fn(); err != nil {
@@ -118,7 +118,7 @@ func (s *Service) Stop() error {
 	ctx, cancel := context.WithTimeout(context.Background(), s.opts.ShutdownTimeout)
 	defer cancel()
 
-	s.opts.logger.Infoln("stopping service", s.Name())
+	s.opts.Logger.Infoln("stopping service", s.Name())
 
 	var errChan = make(chan error, 1)
 	var stopChan = make(chan struct{}, 1)
@@ -133,13 +133,13 @@ func (s *Service) Stop() error {
 	select {
 	// success stop
 	case <-stopChan:
-		s.opts.logger.Infof("service [%s] was stopped", s.Name())
+		s.opts.Logger.Infof("service [%s] was stopped", s.Name())
 	// stop with error
 	case err := <-errChan:
 		return err
 	// stop by context
 	case <-ctx.Done():
-		s.opts.logger.Infof("failed to stop service [%s]. Stopping by context", s.Name())
+		s.opts.Logger.Infof("failed to stop service [%s]. Stopping by context", s.Name())
 	}
 
 	for _, fn := range s.opts.AfterStop {

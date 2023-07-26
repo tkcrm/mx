@@ -8,6 +8,7 @@ require (
 )
 
 require (
+	github.com/benbjohnson/clock v1.3.5 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
@@ -23,6 +24,7 @@ require (
 require (
 	github.com/cristalhq/aconfig v0.18.4
 	github.com/cristalhq/aconfig/aconfigdotenv v0.17.1
+	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/gorilla/mux v1.8.0
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/prometheus/client_golang v1.16.0
