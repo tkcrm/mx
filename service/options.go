@@ -14,7 +14,7 @@ const (
 
 // Options for service
 type Options struct {
-	logger logger.Logger
+	Logger logger.Logger
 
 	Name    string
 	Enabled bool
@@ -38,7 +38,7 @@ type Options struct {
 }
 
 func (s *Options) Validate() error {
-	if s.logger == nil {
+	if s.Logger == nil {
 		return fmt.Errorf("undefined logger")
 	}
 
@@ -63,7 +63,7 @@ func (s *Options) Validate() error {
 
 func newOptions(opts ...Option) Options {
 	opt := Options{
-		logger: logger.New(),
+		Logger: logger.New(),
 
 		Name:    defaultServiceName,
 		Enabled: true,
@@ -92,52 +92,36 @@ type Option func(o *Options)
 // traps TERM, INT, and QUIT.  Users of this feature to disable the signal
 // handler, should control liveness of the service through the context.
 func WithSignal(b bool) Option {
-	return func(o *Options) {
-		o.Signal = b
-	}
+	return func(o *Options) { o.Signal = b }
 }
 
 // Name of the service
 func WithName(n string) Option {
-	return func(o *Options) {
-		o.Name = n
-	}
+	return func(o *Options) { o.Name = n }
 }
 
 func WithContext(ctx context.Context) Option {
-	return func(o *Options) {
-		o.Context = ctx
-	}
+	return func(o *Options) { o.Context = ctx }
 }
 
 func WithLogger(l logger.Logger) Option {
-	return func(o *Options) {
-		o.logger = l
-	}
+	return func(o *Options) { o.Logger = l }
 }
 
 func WithStart(fn func(context.Context) error) Option {
-	return func(o *Options) {
-		o.StartFn = fn
-	}
+	return func(o *Options) { o.StartFn = fn }
 }
 
 func WithStop(fn func(context.Context) error) Option {
-	return func(o *Options) {
-		o.StopFn = fn
-	}
+	return func(o *Options) { o.StopFn = fn }
 }
 
 func WithEnabled(v bool) Option {
-	return func(o *Options) {
-		o.Enabled = v
-	}
+	return func(o *Options) { o.Enabled = v }
 }
 
 func WithShutdownTimeout(v time.Duration) Option {
-	return func(o *Options) {
-		o.ShutdownTimeout = v
-	}
+	return func(o *Options) { o.ShutdownTimeout = v }
 }
 
 func WithService(svc any) Option {

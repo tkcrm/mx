@@ -47,6 +47,9 @@ func (s *servicesRunner) registerService(svc *service.Service) {
 		svcOpts.Context = s.ctx
 	}
 
+	// set logger
+	svcOpts.Logger = s.logger
+
 	// validate service options
 	if err := svcOpts.Validate(); err != nil {
 		s.logger.Errorf("service [%s] was skipped because it has validation error: %s", svc.Name(), err)
