@@ -48,7 +48,7 @@ func (c *config) generateMarkdown(l *aconfig.Loader) {
 	}
 
 	var out strings.Builder
-	_, _ = out.WriteString("# Enviroments\n\n")
+	_, _ = out.WriteString("# Environments\n\n")
 	for i, row := range table {
 		_, _ = out.WriteString(cellSeparator)
 
