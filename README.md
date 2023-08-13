@@ -16,6 +16,7 @@ A Go microservices framework with runtime launcher and services runner
 - [ ] GRPC transport
 - [ ] Fiber transport
 - [x] Config loader
+- [x] CLI tools
 
 ## How to use
 
@@ -111,4 +112,37 @@ func main() {
 if err := ln.Run(); err != nil {
     logger.Fatal(err)
 }
+```
+
+## Config loader
+
+```go
+type Config struct {
+    ServiceName string            `default:"mx-example" validate:"required"`
+    Prometheus  prometheus.Config `env:"PROMETHEUS"`
+}
+
+conf := new(Config)
+if err := cfg.Load(conf, cfg.WithVersion(version)); err != nil {
+    logger.Fatalf("could not load configuration: %s", err)
+}
+```
+
+### CLI commands
+
+```bash
+# Print help
+go run main.go --help
+
+# Print app version
+go run main.go --version
+
+# Validate application configuration without starting a microservice
+go run main.go --validate
+
+# Print markdown enviroment variables
+go run main.go --markdown
+
+# Print markdown enviroment variables and save to file
+go run main.go --markdown --file ENVS.md
 ```
