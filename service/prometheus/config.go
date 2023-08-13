@@ -4,11 +4,11 @@ import "fmt"
 
 type Config struct {
 	// Port - default 10001
-	Port string `json:"PROMETHEUS_PORT" default:"10001"`
+	Port string `default:"10001"`
 	// Endpoint - default /metrics
-	Endpoint string `json:"PROMETHEUS_ENDPOINT" default:"/metrics"`
+	Endpoint string `default:"/metrics"`
 	// Enabled - default true
-	Enabled bool `json:"PROMETHEUS_ENABLED" default:"true"`
+	Enabled bool `default:"true"`
 }
 
 func (c *Config) Validate() error {
