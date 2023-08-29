@@ -20,7 +20,6 @@ type options struct {
 	envFile       string
 	envPath       string
 	validate      bool
-	test          bool
 	ctx           context.Context
 	validateFuncs []ValidateFn
 }
@@ -61,12 +60,6 @@ func WithEnvPath(v string) Option {
 func WithValidate(v bool) Option {
 	return func(o *options) {
 		o.validate = v
-	}
-}
-
-func WithTest(v bool) Option {
-	return func(o *options) {
-		o.test = v
 	}
 }
 
