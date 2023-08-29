@@ -3,7 +3,7 @@ module github.com/tkcrm/mx
 go 1.21
 
 require (
-	github.com/go-playground/validator/v10 v10.15.0
+	github.com/go-playground/validator/v10 v10.15.2
 	go.uber.org/zap v1.25.0
 	golang.org/x/sync v0.3.0
 )
