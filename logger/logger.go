@@ -41,8 +41,13 @@ func (l *logger) Sugar() *sugaredLogger { return l.sugaredLogger }
 // Std returns standard library log.Logger
 func (l *logger) Std() *log.Logger { return zap.NewStdLog(l.Desugar()) }
 
-// Default returns default logger instance.
+// Default returns default logger instance
 func Default() Logger {
+	return DefaultExtended()
+}
+
+// Default returns default extended logger instance
+func DefaultExtended() ExtendedLogger {
 	atom := zap.NewAtomicLevel()
 	atom.SetLevel(zapcore.DebugLevel)
 

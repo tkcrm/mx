@@ -16,8 +16,9 @@ const (
 type Options struct {
 	Logger logger.Logger
 
-	Name    string
-	Enabled bool
+	Name          string
+	Enabled       bool
+	HealthChecker HealthChecker
 
 	StartFn func(ctx context.Context) error
 	StopFn  func(ctx context.Context) error
@@ -140,6 +141,10 @@ func WithService(svc any) Option {
 
 		if impl, ok := svc.(Enabler); ok {
 			o.Enabled = impl.Enabled()
+		}
+
+		if impl, ok := svc.(HealthChecker); ok {
+			o.HealthChecker = impl
 		}
 	}
 }
