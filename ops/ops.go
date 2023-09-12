@@ -64,7 +64,7 @@ func (s *ops) Start(ctx context.Context) error {
 	// metrics
 	mux.Handle(s.config.MetricsPath, promhttp.Handler())
 
-	srv := http_transport.NewHTTPServer(
+	srv := http_transport.NewServer(
 		s.config.httpOption(),
 		http_transport.WithLogger(s.logger),
 		http_transport.WithHandler(mux),

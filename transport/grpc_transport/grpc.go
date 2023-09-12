@@ -33,8 +33,8 @@ func defaultGRPCServer() *grpc.Server {
 	)
 }
 
-// New creates new gRPC server and implements service.IService interface.
-func New(opts ...Option) service.IService {
+// NewServer creates a new gRPC server that implements service.IService interface.
+func NewServer(opts ...Option) service.IService {
 	srv := &gRPCServer{
 		name:   defaultGRPCName,
 		logger: logger.Default(),

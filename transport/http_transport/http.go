@@ -21,8 +21,8 @@ type httpServer struct {
 
 const defaultHTTPName = "http-server"
 
-// NewHTTPServer creates http server.
-func NewHTTPServer(opts ...Option) *httpServer {
+// NewServer creates http server.
+func NewServer(opts ...Option) *httpServer {
 	serve := &httpServer{
 		name:   defaultHTTPName,
 		logger: logger.DefaultExtended(),
