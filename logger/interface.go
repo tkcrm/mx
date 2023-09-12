@@ -1,6 +1,8 @@
 package logger
 
 import (
+	"log"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -29,6 +31,7 @@ type sugaredLogger = zap.SugaredLogger
 
 type ExtendedLogger interface {
 	Logger
+	Std() *log.Logger
 	Sugar() *sugaredLogger
 	With(...any) ExtendedLogger
 }

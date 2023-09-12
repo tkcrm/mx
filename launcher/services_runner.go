@@ -7,6 +7,14 @@ import (
 	"github.com/tkcrm/mx/service"
 )
 
+type RunnerServicesSequence int
+
+const (
+	RunnerServicesSequenceNone = iota
+	RunnerServicesSequenceFifo
+	RunnerServicesSequenceLifo
+)
+
 type IServicesRunner interface {
 	// Register servicse
 	Register(services ...*service.Service)
@@ -67,4 +75,15 @@ func (s *servicesRunner) registerService(svc *service.Service) {
 
 func (s *servicesRunner) Services() []*service.Service {
 	return s.services
+}
+
+// hcServices return services that implements HealthChecker interface
+func (s *servicesRunner) hcServices() []service.HealthChecker {
+	services := []service.HealthChecker{}
+	for _, svc := range s.services {
+		if svc.Options().HealthChecker != nil {
+			services = append(services, svc.Options().HealthChecker)
+		}
+	}
+	return services
 }

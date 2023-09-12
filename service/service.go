@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"time"
 
 	signalutil "github.com/tkcrm/mx/util/signal"
 )
@@ -27,11 +28,11 @@ func New(opts ...Option) *Service {
 	}
 }
 
-func (s *Service) Name() string { return s.opts.Name }
+func (s Service) Name() string { return s.opts.Name }
 
 func (s *Service) Options() *Options { return &s.opts }
 
-func (s *Service) String() string { return "mx" }
+func (s Service) String() string { return "mx" }
 
 func (s *Service) Start() error {
 	if s.opts.StartFn == nil {
@@ -59,10 +60,13 @@ func (s *Service) Start() error {
 	}
 
 	var errChan = make(chan error, 1)
+	var doneChan = make(chan struct{}, 1)
 	go func() {
 		if err := s.opts.StartFn(s.opts.Context); err != nil {
 			errChan <- err
+			return
 		}
+		doneChan <- struct{}{}
 	}()
 
 	for _, fn := range s.opts.AfterStart {
@@ -84,6 +88,13 @@ func (s *Service) Start() error {
 	case <-ch:
 	// wait on context cancel
 	case <-s.opts.Context.Done():
+	}
+
+	// grace stop Start func
+	select {
+	case <-time.After(time.Second * 10):
+		s.opts.Logger.Infof("service [%s] was stopped by timeout", s.Name())
+	case <-doneChan:
 	}
 
 	for _, fn := range s.opts.AfterStartFinished {
@@ -121,25 +132,25 @@ func (s *Service) Stop() error {
 	s.opts.Logger.Infoln("stopping service", s.Name())
 
 	var errChan = make(chan error, 1)
-	var stopChan = make(chan struct{}, 1)
+	var doneChan = make(chan struct{}, 1)
 	go func() {
 		if err := s.opts.StopFn(ctx); err != nil {
 			errChan <- err
 			return
 		}
-		stopChan <- struct{}{}
+		doneChan <- struct{}{}
 	}()
 
 	select {
 	// success stop
-	case <-stopChan:
+	case <-doneChan:
 		s.opts.Logger.Infof("service [%s] was stopped", s.Name())
 	// stop with error
 	case err := <-errChan:
 		return err
 	// stop by context
 	case <-ctx.Done():
-		s.opts.Logger.Infof("failed to stop service [%s]. Stopping by context", s.Name())
+		s.opts.Logger.Infof("failed to stop service [%s]. stop by context", s.Name())
 	}
 
 	for _, fn := range s.opts.AfterStop {

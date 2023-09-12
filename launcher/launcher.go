@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"slices"
+	"sync"
 
+	"github.com/tkcrm/mx/ops"
 	"github.com/tkcrm/mx/service"
 	signalutil "github.com/tkcrm/mx/util/signal"
 	"golang.org/x/sync/errgroup"
@@ -45,6 +48,17 @@ func New(opts ...Option) ILauncher {
 }
 
 func (l *launcher) Run() error {
+	// register ops services
+	if l.opts.OpsConfig.Enabled {
+		hcServicecs := l.servicesRunner.hcServices()
+		opsSvcs := ops.New(l.opts.logger, l.opts.OpsConfig, hcServicecs...)
+		svcs := make([]*service.Service, len(opsSvcs))
+		for i := range opsSvcs {
+			svcs[i] = service.New(service.WithService(opsSvcs[i]))
+		}
+		l.servicesRunner.Register(svcs...)
+	}
+
 	// before start
 	for _, fn := range l.opts.BeforeStart {
 		if err := fn(); err != nil {
@@ -54,8 +68,11 @@ func (l *launcher) Run() error {
 
 	// start service
 	var errChan = make(chan error, len(l.servicesRunner.Services()))
+	graceWait := new(sync.WaitGroup)
+	graceWait.Add(len(l.servicesRunner.Services()))
 	for i := range l.servicesRunner.Services() {
 		go func(svc *service.Service) {
+			defer graceWait.Done()
 			if err := svc.Start(); err != nil {
 				err := fmt.Errorf("failed to start service [%s]: %w", svc.Name(), err)
 				errChan <- err
@@ -81,9 +98,12 @@ func (l *launcher) Run() error {
 		return err
 	// wait on kill signal
 	case <-ch:
+		l.cancelFn()
 	// wait on context cancel
 	case <-l.opts.Context.Done():
 	}
+
+	graceWait.Wait()
 
 	var stopErr error
 
@@ -95,20 +115,42 @@ func (l *launcher) Run() error {
 	}
 
 	// stop services
-	g := new(errgroup.Group)
-	for i := range l.servicesRunner.Services() {
-		svc := l.servicesRunner.Services()[i]
-		g.Go(func() error {
-			if err := svc.Stop(); err != nil {
-				l.opts.logger.Errorf("failed to stop service [%s] error: %s", svc.Name(), err)
+	switch l.opts.RunnerServicesSequence {
+	case RunnerServicesSequenceNone:
+		{
+			g := new(errgroup.Group)
+			for i := range l.servicesRunner.Services() {
+				svc := l.servicesRunner.Services()[i]
+				g.Go(func() error {
+					if err := svc.Stop(); err != nil {
+						l.opts.logger.Errorf("failed to stop service [%s] error: %s", svc.Name(), err)
+					}
+					return nil
+				})
 			}
-			return nil
-		})
-	}
 
-	// wait stop group
-	if err := g.Wait(); err != nil {
-		return err
+			// wait stop group
+			g.Wait()
+		}
+	case RunnerServicesSequenceFifo:
+		{
+			for _, svc := range l.servicesRunner.Services() {
+				if err := svc.Stop(); err != nil {
+					l.opts.logger.Errorf("failed to stop service [%s] error: %s", svc.Name(), err)
+				}
+			}
+		}
+	case RunnerServicesSequenceLifo:
+		{
+			reverted := make([]*service.Service, len(l.servicesRunner.Services()))
+			copy(reverted, l.servicesRunner.Services())
+			slices.Reverse(reverted)
+			for _, svc := range reverted {
+				if err := svc.Stop(); err != nil {
+					l.opts.logger.Errorf("failed to stop service [%s] error: %s", svc.Name(), err)
+				}
+			}
+		}
 	}
 
 	// after stop

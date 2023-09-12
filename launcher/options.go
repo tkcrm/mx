@@ -4,12 +4,13 @@ import (
 	"context"
 
 	"github.com/tkcrm/mx/logger"
+	"github.com/tkcrm/mx/ops"
 )
 
 type Option func(*Options)
 
 type Options struct {
-	logger logger.Logger
+	logger logger.ExtendedLogger
 
 	Name    string
 	Version string
@@ -20,19 +21,25 @@ type Options struct {
 	AfterStart  []func() error
 	AfterStop   []func() error
 
+	RunnerServicesSequence RunnerServicesSequence
+
 	Signal bool
 
 	Context context.Context
+
+	OpsConfig ops.Config
 }
 
 func newOptions(opts ...Option) Options {
 	opt := Options{
-		logger: logger.New(),
+		logger: logger.NewExtended(),
 
 		BeforeStart: make([]func() error, 0),
 		BeforeStop:  make([]func() error, 0),
 		AfterStart:  make([]func() error, 0),
 		AfterStop:   make([]func() error, 0),
+
+		RunnerServicesSequence: RunnerServicesSequenceNone,
 
 		Signal: true,
 
@@ -60,12 +67,20 @@ func WithContext(ctx context.Context) Option {
 	return func(o *Options) { o.Context = ctx }
 }
 
+func WithRunnerServicesSequence(v RunnerServicesSequence) Option {
+	return func(o *Options) { o.RunnerServicesSequence = v }
+}
+
 func WithSignal(b bool) Option {
 	return func(o *Options) { o.Signal = b }
 }
 
-func WithLogger(l logger.Logger) Option {
+func WithLogger(l logger.ExtendedLogger) Option {
 	return func(o *Options) { o.logger = l }
+}
+
+func WithOpsConfig(c ops.Config) Option {
+	return func(o *Options) { o.OpsConfig = c }
 }
 
 // Before and Afters

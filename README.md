@@ -9,12 +9,12 @@ A Go microservices framework with runtime launcher and services runner
 - [x] Services
 - [x] Services runner
 - [x] Service `Enabler` interface
-- [ ] Service `Healthy` interface
-- [ ] Metrics
-- [ ] Health checker
+- [x] Service `HealthChecker` interface
+- [x] Metrics
+- [x] Health checker
 - [x] Ping pong service
-- [ ] GRPC transport
-- [ ] Fiber transport
+- [x] GRPC transport
+- [x] Http transport
 - [x] Config loader
 - [x] CLI tools
 
@@ -87,22 +87,44 @@ type IService interface {
     Stop(ctx context.Context) error
 }
 
-type myService struct {}
+type books struct {
+    name       string
+    hcInterval time.Duration
+}
 
-func (s *myService) Name() string { return "my-service" }
+func New() *books {
+    return &books{
+        name:       "books-service",
+        hcInterval: time.Second * 3,
+    }
+}
 
-func (s *myService) Start(ctx context.Context) error { return nil }
+func (s books) Name() string { return s.name }
 
-func (s *myService) Stop(ctx context.Context) error { return nil }
+func (s books) Healthy(ctx context.Context) error { return nil }
+
+func (s books) Interval() time.Duration { return s.hcInterval }
+
+func (s books) Start(ctx context.Context) error {
+    <-ctx.Done()
+    return nil
+}
+
+func (s books) Stop(ctx context.Context) error { return nil }
+
+var _ service.HealthChecker = (*books)(nil)
+
+var _ service.IService = (*books)(nil)
 
 func main() {
-    // init service
-    svc := service.New(
-        service.WithService(&myService{}),
-    )
+    ln := launcher.New()
 
-    // register service in launcher
-    ln.ServicesRunner().Register(svc)
+    // register service in launcher with health checker
+    ln.ServicesRunner().Register(
+        service.New(
+            service.WithService(New()),
+        ),
+    )
 }
 ```
 
@@ -119,7 +141,9 @@ if err := ln.Run(); err != nil {
 ```go
 type Config struct {
     ServiceName string            `default:"mx-example" validate:"required"`
-    Prometheus  prometheus.Config `env:"PROMETHEUS"`
+    Prometheus  prometheus.Config
+    Ops         ops.Config
+    Grpc        grpc_transport.Config
 }
 
 conf := new(Config)
