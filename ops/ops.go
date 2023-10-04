@@ -6,83 +6,75 @@
 package ops
 
 import (
-	"context"
+	"fmt"
 	"net/http"
-	"net/http/pprof"
+	"strings"
 
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/tkcrm/mx/logger"
 	"github.com/tkcrm/mx/service"
 	"github.com/tkcrm/mx/transport/http_transport"
 )
 
-const (
-	opsServiceName = "ops-server"
-)
-
 type ops struct {
-	logger     logger.ExtendedLogger
-	config     Config
-	httpServer service.IService
-	hcService  *healthChecker
+	logger   logger.ExtendedLogger
+	config   Config
+	services []service.IService
 }
 
-// New creates new OPS server and OPS HealthChecker's worker.
-func New(log logger.ExtendedLogger, cfg Config, hcServicesList ...service.HealthChecker) []service.IService {
-	hcService := newHealthChecker(log, hcServicesList...)
-	opsSvc := &ops{
-		logger:    log,
-		config:    cfg,
-		hcService: hcService,
+// New return list with ops services
+func New(log logger.ExtendedLogger, cfg Config) []service.IService {
+	s := &ops{
+		logger: log,
+		config: cfg,
 	}
 
-	return []service.IService{
-		hcService, opsSvc,
+	services := []opsService{}
+
+	if s.config.Metrics.Enabled {
+		services = append(services, newMetricsOpsService(s.config.Metrics))
 	}
-}
 
-// Name returns name of http server.
-func (s ops) Name() string { return opsServiceName }
+	if s.config.Healthy.Enabled {
+		hcSvc := newHealthCheckerOpsService(s.logger, s.config.Healthy)
+		s.services = append(s.services, hcSvc)
+		services = append(services, hcSvc)
+	}
 
-// Enabled returns is service enabled.
-func (s ops) Enabled() bool { return s.config.Enabled }
+	if s.config.Profiler.Enabled {
+		services = append(services, newProfilerOpsService(s.config.Profiler))
+	}
 
-// Start ops server
-func (s *ops) Start(ctx context.Context) error {
-	mux := http.NewServeMux()
+	if len(services) == 0 {
+		return []service.IService{}
+	}
 
-	// prepare HealthChecker's worker and handler
-	mux.Handle(s.config.HealthyPath, s.hcService)
+	type muxServer struct {
+		names []string
+		srv   *http.ServeMux
+	}
+	muxServers := map[string]*muxServer{}
 
-	// Expose the registered pprof via HTTP.
-	mux.HandleFunc(s.config.ProfilePath+"/", pprof.Index)
-	mux.HandleFunc(s.config.ProfilePath+"/cmdline", pprof.Cmdline)
-	mux.HandleFunc(s.config.ProfilePath+"/profile", pprof.Profile)
-	mux.HandleFunc(s.config.ProfilePath+"/symbol", pprof.Symbol)
-	mux.HandleFunc(s.config.ProfilePath+"/trace", pprof.Trace)
-
-	// metrics
-	mux.Handle(s.config.MetricsPath, promhttp.Handler())
-
-	srv := http_transport.NewServer(
-		s.config.httpOption(),
-		http_transport.WithLogger(s.logger),
-		http_transport.WithHandler(mux),
-		http_transport.WithName(opsServiceName),
-	)
-
-	s.httpServer = srv
-
-	return s.httpServer.Start(ctx)
-}
-
-// Stop ops server
-func (s *ops) Stop(ctx context.Context) error {
-	if s.httpServer != nil {
-		if err := s.httpServer.Stop(ctx); err != nil {
-			return err
+	// init servers for different ports
+	for _, svc := range services {
+		if _, ok := muxServers[svc.getPort()]; !ok {
+			muxServers[svc.getPort()] = &muxServer{
+				srv: http.NewServeMux(),
+			}
 		}
+
+		muxServers[svc.getPort()].names = append(muxServers[svc.getPort()].names, svc.Name())
+		svc.initService(muxServers[svc.getPort()].srv)
 	}
 
-	return nil
+	// append http servers
+	for port, item := range muxServers {
+		s.services = append(s.services, http_transport.NewServer(
+			s.config.getHttpOptionForPort(port),
+			http_transport.WithLogger(s.logger),
+			http_transport.WithHandler(item.srv),
+			http_transport.WithName(fmt.Sprintf("ops-server-%s", strings.Join(item.names, "-"))),
+		))
+	}
+
+	return s.services
 }

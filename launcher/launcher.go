@@ -50,8 +50,10 @@ func New(opts ...Option) ILauncher {
 func (l *launcher) Run() error {
 	// register ops services
 	if l.opts.OpsConfig.Enabled {
-		hcServicecs := l.servicesRunner.hcServices()
-		opsSvcs := ops.New(l.opts.logger, l.opts.OpsConfig, hcServicecs...)
+		if l.opts.OpsConfig.Healthy.Enabled {
+			l.opts.OpsConfig.Healthy.AddServicesList(l.servicesRunner.hcServices())
+		}
+		opsSvcs := ops.New(l.opts.logger, l.opts.OpsConfig)
 		svcs := make([]*service.Service, len(opsSvcs))
 		for i := range opsSvcs {
 			svcs[i] = service.New(service.WithService(opsSvcs[i]))
