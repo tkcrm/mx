@@ -89,6 +89,10 @@ func (l *launcher) Run() error {
 		}
 	}
 
+	if l.opts.AppStartStopLoggin {
+		l.opts.logger.Infoln("app", l.opts.Name, "was started")
+	}
+
 	ch := make(chan os.Signal, 1)
 	if l.opts.Signal {
 		signal.Notify(ch, signalutil.Shutdown()...)
@@ -160,6 +164,10 @@ func (l *launcher) Run() error {
 		if err := fn(); err != nil {
 			stopErr = err
 		}
+	}
+
+	if l.opts.AppStartStopLoggin {
+		l.opts.logger.Infoln("app", l.opts.Name, "was stopped")
 	}
 
 	return stopErr
