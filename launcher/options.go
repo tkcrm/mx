@@ -21,6 +21,8 @@ type Options struct {
 	AfterStart  []func() error
 	AfterStop   []func() error
 
+	AppStartStopLoggin bool
+
 	RunnerServicesSequence RunnerServicesSequence
 
 	Signal bool
@@ -81,6 +83,10 @@ func WithLogger(l logger.ExtendedLogger) Option {
 
 func WithOpsConfig(c ops.Config) Option {
 	return func(o *Options) { o.OpsConfig = c }
+}
+
+func WithAppStartStopLoggin(v bool) Option {
+	return func(o *Options) { o.AppStartStopLoggin = v }
 }
 
 // Before and Afters

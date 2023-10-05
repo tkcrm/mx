@@ -14,7 +14,7 @@ func newProfilerOpsService(cfg ProfilerConfig) *profilerOpsService {
 }
 
 type ProfilerConfig struct {
-	Enabled bool   `default:"true" usage:"allows to enable profiler"`
+	Enabled bool   `default:"false" usage:"allows to enable profiler"`
 	Path    string `default:"/debug/pprof" usage:"allows to set custom profiler path"`
 	Port    string `default:"10000" usage:"allows to set custom profiler port"`
 }
