@@ -89,7 +89,7 @@ func (l *launcher) Run() error {
 		}
 	}
 
-	if l.opts.AppStartStopLoggin {
+	if l.opts.AppStartStopLog {
 		l.opts.logger.Infoln("app", l.opts.Name, "was started")
 	}
 
@@ -166,7 +166,7 @@ func (l *launcher) Run() error {
 		}
 	}
 
-	if l.opts.AppStartStopLoggin {
+	if l.opts.AppStartStopLog {
 		l.opts.logger.Infoln("app", l.opts.Name, "was stopped")
 	}
 
