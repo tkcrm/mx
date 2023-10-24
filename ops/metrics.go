@@ -15,9 +15,9 @@ func newMetricsOpsService(cfg MetricsConfig) *metricsOpsService {
 }
 
 type MetricsConfig struct {
-	Enabled bool   `default:"true" usage:"allows to enable metrics"`
-	Path    string `default:"/metrics" usage:"allows to set custom metrics path"`
-	Port    string `default:"10000" usage:"allows to set custom metrics port"`
+	Enabled bool   `default:"true" usage:"allows to enable metrics" example:"true"`
+	Path    string `default:"/metrics" validate:"required" usage:"allows to set custom metrics path" example:"/metrics"`
+	Port    string `default:"10000" validate:"required" usage:"allows to set custom metrics port" example:"10000"`
 }
 
 func (s metricsOpsService) Name() string { return "metrics" }

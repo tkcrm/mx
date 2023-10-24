@@ -6,11 +6,11 @@ import (
 
 // Config provides configuration for ops server.
 type Config struct {
-	Enabled bool   `default:"false" usage:"allows to enable ops server"`
-	Network string `default:"tcp" usage:"allows to set ops listen network: tcp/udp"`
+	Enabled bool   `default:"false" usage:"allows to enable ops server" example:"false"`
+	Network string `default:"tcp" required:"true" validate:"oneof=tcp udp" usage:"allows to set ops listen network: tcp/udp" example:"tcp"`
 
 	// Tracing
-	TracingEnabled bool `default:"false" usage:"allows to enable tracing"`
+	TracingEnabled bool `default:"false" usage:"allows to enable tracing" example:"false"`
 
 	// Metrics
 	Metrics MetricsConfig
