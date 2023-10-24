@@ -57,12 +57,12 @@ func NewServer(opts ...Option) service.IService {
 
 	for i := range srv.services {
 		if srv.services[i] == nil {
-			srv.logger.Errorf("empty gRPC service #%d", i)
+			srv.logger.Errorf("empty grpc service #%d", i)
 
 			continue
 		}
 
-		srv.logger.Infof("register gRPC service: %s", srv.services[i].Name())
+		srv.logger.Infof("register grpc service: %s", srv.services[i].Name())
 
 		srv.services[i].Register(srv.server)
 	}
@@ -78,10 +78,9 @@ func (s *gRPCServer) Enabled() bool { return s.Config.Enabled }
 
 // Start allows starting gRPC server.
 func (s *gRPCServer) Start(ctx context.Context) error {
-	s.logger.Infow("prepare listener",
-		"name", s.name,
-		"address", s.Addr,
-		"network", s.Network)
+	s.logger.Infof("prepare listener %s on %s / %s",
+		s.name, s.Addr, s.Network,
+	)
 
 	lis, err := new(net.ListenConfig).Listen(ctx, s.Network, s.Addr)
 	if err != nil {

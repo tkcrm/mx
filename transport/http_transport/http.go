@@ -51,7 +51,9 @@ func (s *httpServer) Start(ctx context.Context) error {
 		"network", s.Network,
 	)
 
-	log.Info("prepare listener")
+	log.Infof("prepare listener %s on %s / %s",
+		s.name, s.Address, s.Network,
+	)
 
 	lis, err := new(net.ListenConfig).Listen(ctx, s.Network, s.Address)
 	if err != nil {
