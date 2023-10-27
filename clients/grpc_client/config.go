@@ -8,6 +8,7 @@ type Config struct {
 	Name     string `default:"nameless-grpc-client" validate:"required" example:"backend-grpc-client"`
 	Addr     string `validate:"required,hostname_port" usage:"grpc server address" example:"localhost:9000"`
 	UseTls   bool   `default:"false" example:"false"`
+	Insecure bool   `default:"false" example:"false"`
 	grpsOpts []grpc.DialOption
 }
 

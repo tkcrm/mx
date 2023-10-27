@@ -28,7 +28,9 @@ func New[T any](
 		config.grpsOpts = append(config.grpsOpts,
 			grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{InsecureSkipVerify: false})),
 		)
-	} else {
+	}
+
+	if config.Insecure {
 		config.grpsOpts = append(config.grpsOpts,
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
 		)
