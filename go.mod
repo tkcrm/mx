@@ -4,6 +4,7 @@ go 1.21
 
 require (
 	github.com/go-playground/validator/v10 v10.15.5
+	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.1
 	go.uber.org/zap v1.26.0
 	golang.org/x/sync v0.4.0
 )
@@ -40,7 +41,6 @@ require (
 	github.com/cristalhq/aconfig/aconfigdotenv v0.17.1
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/gorilla/mux v1.8.0
-	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/prometheus/client_golang v1.17.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.45.0
