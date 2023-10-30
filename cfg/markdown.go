@@ -31,9 +31,9 @@ func (c *config) generateMarkdown(l *aconfig.Loader) {
 			"`" + f.envName + "`",
 			boolIcon(f.isRequired),
 			boolIcon(f.isSecret),
-			f.defaultValue,
+			codeBlock(f.defaultValue),
 			f.usage,
-			f.example,
+			codeBlock(f.example),
 		}
 		table = append(table, cell)
 
@@ -100,4 +100,12 @@ func boolIcon(value bool) string {
 	}
 
 	return " "
+}
+
+func codeBlock(val string) string {
+	if val == "" {
+		return val
+	}
+
+	return "`" + val + "`"
 }
