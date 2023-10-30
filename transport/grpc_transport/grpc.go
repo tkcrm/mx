@@ -3,12 +3,18 @@ package grpc_transport
 import (
 	"context"
 	"net"
+	"runtime/debug"
 
-	gprom "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 	"github.com/tkcrm/mx/logger"
 	"github.com/tkcrm/mx/service"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/health"
+	"google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/status"
 )
 
 const (
@@ -26,19 +32,11 @@ type gRPCServer struct {
 	services []GRPCService
 }
 
-func defaultGRPCServer() *grpc.Server {
-	return grpc.NewServer(
-		grpc.ChainUnaryInterceptor(gprom.UnaryServerInterceptor, otelgrpc.UnaryServerInterceptor()),
-		grpc.ChainStreamInterceptor(gprom.StreamServerInterceptor, otelgrpc.StreamServerInterceptor()),
-	)
-}
-
 // NewServer creates a new gRPC server that implements service.IService interface.
 func NewServer(opts ...Option) service.IService {
 	srv := &gRPCServer{
 		name:   defaultGRPCName,
 		logger: logger.Default(),
-		server: defaultGRPCServer(),
 
 		Config: Config{
 			Enabled: true,
@@ -51,14 +49,63 @@ func NewServer(opts ...Option) service.IService {
 		o(srv)
 	}
 
-	if srv.Reflect {
+	srv.logger = logger.With(srv.logger, "service", srv.name)
+
+	if srv.server == nil {
+		// define unary interceptors
+		unaryInterceptors := []grpc.UnaryServerInterceptor{
+			otelgrpc.UnaryServerInterceptor(),
+		}
+
+		// define stream interceptors
+		streamInterceptors := []grpc.StreamServerInterceptor{
+			otelgrpc.StreamServerInterceptor(),
+		}
+
+		// add logger
+		if srv.LoggerEnabled {
+			unaryInterceptors = append(unaryInterceptors,
+				logging.UnaryServerInterceptor(InterceptorLogger(srv.logger)),
+			)
+			streamInterceptors = append(streamInterceptors,
+				logging.StreamServerInterceptor(InterceptorLogger(srv.logger)),
+			)
+		}
+
+		// add recovery
+		if srv.RecoveryEnabled {
+			customFunc := func(p any) (err error) {
+				logger.With(srv.logger, "stack", string(debug.Stack())).Errorf("recovered from panic: %v", p)
+				return status.Errorf(codes.Internal, "recovered from panic: %v", p)
+			}
+			opts := []recovery.Option{
+				recovery.WithRecoveryHandler(customFunc),
+			}
+			unaryInterceptors = append(unaryInterceptors, recovery.UnaryServerInterceptor(opts...))
+			streamInterceptors = append(streamInterceptors, recovery.StreamServerInterceptor(opts...))
+		}
+
+		// define grpc server options
+		srvOpts := []grpc.ServerOption{
+			grpc.ChainUnaryInterceptor(unaryInterceptors...),
+			grpc.ChainStreamInterceptor(streamInterceptors...),
+		}
+
+		// init default grpc server
+		srv.server = grpc.NewServer(srvOpts...)
+	}
+
+	if srv.ReflectEnabled {
 		srv.services = append(srv.services, new(reflectionService))
+	}
+
+	if srv.HealthCheckEnabled {
+		grpc_health_v1.RegisterHealthServer(srv.server, health.NewServer())
 	}
 
 	for i := range srv.services {
 		if srv.services[i] == nil {
 			srv.logger.Errorf("empty grpc service #%d", i)
-
 			continue
 		}
 

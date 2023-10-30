@@ -22,24 +22,16 @@ type logger struct {
 	*sugaredLogger
 }
 
-// With allows to provide zap.SugaredLogger as common interface.
-func (l logger) With(args ...any) ExtendedLogger {
-	return &logger{
-		l.config,
-		l.appName,
-		l.appVersion,
-		l.logFormat,
-		l.zapConfig,
-		l.options,
-		l.sugaredLogger.With(args...),
-	}
-}
-
 // Sugar returns zap.SugaredLogger
 func (l *logger) Sugar() *sugaredLogger { return l.sugaredLogger }
 
 // Std returns standard library log.Logger
 func (l *logger) Std() *log.Logger { return zap.NewStdLog(l.Desugar()) }
+
+// Logger returns logger instance
+func (l *logger) LoggerInstance() *logger {
+	return l
+}
 
 // Default returns default logger instance
 func Default() Logger {
@@ -76,6 +68,46 @@ func New(opts ...Option) Logger {
 // NewExtended - init new extended logger with options
 func NewExtended(opts ...Option) ExtendedLogger {
 	return initLogger(opts...)
+}
+
+// With allows to provide zap.SugaredLogger as common interface.
+func With(l Logger, args ...any) Logger {
+	lgIface, ok := l.(interface{ LoggerInstance() *logger })
+	if !ok {
+		return l
+	}
+
+	lg := lgIface.LoggerInstance()
+
+	return &logger{
+		lg.config,
+		lg.appName,
+		lg.appVersion,
+		lg.logFormat,
+		lg.zapConfig,
+		lg.options,
+		lg.sugaredLogger.With(args...),
+	}
+}
+
+// WithExtended allows to provide zap.SugaredLogger as common interface.
+func WithExtended(l ExtendedLogger, args ...any) ExtendedLogger {
+	lgIface, ok := l.(interface{ LoggerInstance() *logger })
+	if !ok {
+		return l
+	}
+
+	lg := lgIface.LoggerInstance()
+
+	return &logger{
+		lg.config,
+		lg.appName,
+		lg.appVersion,
+		lg.logFormat,
+		lg.zapConfig,
+		lg.options,
+		lg.sugaredLogger.With(args...),
+	}
 }
 
 func initLogger(opts ...Option) *logger {

@@ -33,7 +33,6 @@ type ExtendedLogger interface {
 	Logger
 	Std() *log.Logger
 	Sugar() *sugaredLogger
-	With(...any) ExtendedLogger
 }
 
 // Logger common interface

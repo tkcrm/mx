@@ -26,13 +26,16 @@ func TestLogger(t *testing.T) {
 }
 
 func Test_LoggerWith(t *testing.T) {
-	l := logger.NewExtended(
+	l := logger.New(
 		logger.WithAppName("test app name"),
 		logger.WithLogLevel(logger.LogLevelDebug),
-		logger.WithLogFormat(logger.LoggerFormatConsole),
-	).With("key", "value").With("key2", "value2")
+	)
 
-	l = l.With("key3", "value3")
+	l = logger.With(l, "key", "value")
+
+	l = logger.With(l, "key2", "value2")
+
+	l = logger.With(l, "key3", "value3")
 
 	l.Infof("some test value: %d", 1234)
 }

@@ -45,7 +45,8 @@ func (s httpServer) Enabled() bool { return s.Config.Enabled }
 
 // Start allows starting http server.
 func (s *httpServer) Start(ctx context.Context) error {
-	log := s.logger.With(
+	log := logger.WithExtended(
+		s.logger,
 		"name", s.name,
 		"address", s.Address,
 		"network", s.Network,
@@ -101,7 +102,7 @@ func (s *httpServer) Stop(ctx context.Context) error {
 	}
 
 	if err := s.server.Shutdown(ctx); err != nil {
-		return fmt.Errorf("could not stop server: %w", err)
+		return fmt.Errorf("failed to stop server: %w", err)
 	}
 
 	return nil
