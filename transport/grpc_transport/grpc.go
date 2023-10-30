@@ -3,7 +3,6 @@ package grpc_transport
 import (
 	"context"
 	"net"
-	"runtime/debug"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
@@ -11,10 +10,8 @@ import (
 	"github.com/tkcrm/mx/service"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
-	"google.golang.org/grpc/status"
 )
 
 const (
@@ -74,12 +71,8 @@ func NewServer(opts ...Option) service.IService {
 
 		// add recovery
 		if srv.RecoveryEnabled {
-			customFunc := func(p any) (err error) {
-				logger.With(srv.logger, "stack", string(debug.Stack())).Errorf("recovered from panic: %v", p)
-				return status.Errorf(codes.Internal, "recovered from panic: %v", p)
-			}
 			opts := []recovery.Option{
-				recovery.WithRecoveryHandler(customFunc),
+				recovery.WithRecoveryHandler(RecoveryFunc(srv.logger)),
 			}
 			unaryInterceptors = append(unaryInterceptors, recovery.UnaryServerInterceptor(opts...))
 			streamInterceptors = append(streamInterceptors, recovery.StreamServerInterceptor(opts...))
