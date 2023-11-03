@@ -1,6 +1,10 @@
 package grpc_client
 
-import "google.golang.org/grpc"
+import (
+	"context"
+
+	"google.golang.org/grpc"
+)
 
 // Config provides configuration for grpc cleint.
 type Config struct {
@@ -9,6 +13,7 @@ type Config struct {
 	Addr     string `validate:"required,hostname_port" usage:"grpc server address" example:"localhost:9000"`
 	UseTls   bool   `default:"false" example:"false"`
 	Insecure bool   `default:"false" example:"false"`
+	ctx      context.Context
 	grpsOpts []grpc.DialOption
 }
 
@@ -24,6 +29,14 @@ func WithName(v string) Option {
 	return func(s *Config) {
 		if v != "" {
 			s.Name = v
+		}
+	}
+}
+
+func WithContext(v context.Context) Option {
+	return func(s *Config) {
+		if v != nil {
+			s.ctx = v
 		}
 	}
 }
