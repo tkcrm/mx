@@ -47,17 +47,28 @@ func (s healthCheckerOpsService) Name() string { return "ops-health-checker" }
 
 // ServeHTTP implementation of http.Handler for OPS worker.
 func (o *healthCheckerOpsService) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
+	var existsErr bool
 	out := make(map[string]interface{})
 	o.resp.Range(func(key, val any) bool {
 		if name, ok := key.(string); ok {
 			out[name] = val
 		}
 
+		if !existsErr {
+			if code, ok := val.(int); ok && code > 0 {
+				existsErr = true
+			}
+		}
+
 		return true
 	})
 
 	w.Header().Add("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
+	if existsErr {
+		w.WriteHeader(http.StatusServiceUnavailable)
+	} else {
+		w.WriteHeader(http.StatusOK)
+	}
 
 	if err := json.NewEncoder(w).Encode(out); err != nil {
 		o.log.Errorf("could not write response: %s", err)
