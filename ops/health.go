@@ -3,12 +3,26 @@ package ops
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"sync"
 	"time"
 
 	"github.com/tkcrm/mx/logger"
 	"github.com/tkcrm/mx/service"
+)
+
+type HealthCheckCode int
+
+const (
+	HealthCheckCodeOk              HealthCheckCode = 0
+	HealthCheckCodeError           HealthCheckCode = 1
+	HealthCheckCodeServiceStarting HealthCheckCode = 2
+)
+
+var (
+	ErrHealthCheckError           = errors.New("health check error")
+	ErrHealthCheckServiceStarting = errors.New("service is starting")
 )
 
 // health implements service.Service
@@ -47,16 +61,19 @@ func (s healthCheckerOpsService) Name() string { return "ops-health-checker" }
 
 // ServeHTTP implementation of http.Handler for OPS worker.
 func (o *healthCheckerOpsService) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
-	var existsErr bool
+	var existsErr, existsProcessing bool
 	out := make(map[string]interface{})
 	o.resp.Range(func(key, val any) bool {
 		if name, ok := key.(string); ok {
 			out[name] = val
 		}
 
-		if !existsErr {
-			if code, ok := val.(int); ok && code > 0 {
+		if code, ok := val.(HealthCheckCode); ok {
+			switch code {
+			case HealthCheckCodeError:
 				existsErr = true
+			case HealthCheckCodeServiceStarting:
+				existsProcessing = true
 			}
 		}
 
@@ -64,11 +81,17 @@ func (o *healthCheckerOpsService) ServeHTTP(w http.ResponseWriter, _ *http.Reque
 	})
 
 	w.Header().Add("Content-Type", "application/json")
-	if existsErr {
-		w.WriteHeader(http.StatusServiceUnavailable)
-	} else {
-		w.WriteHeader(http.StatusOK)
+
+	resCode := http.StatusOK
+	if existsProcessing {
+		resCode = http.StatusFailedDependency
 	}
+
+	if existsErr {
+		resCode = http.StatusServiceUnavailable
+	}
+
+	w.WriteHeader(resCode)
 
 	if err := json.NewEncoder(w).Encode(out); err != nil {
 		o.log.Errorf("could not write response: %s", err)
@@ -106,10 +129,20 @@ func (o *healthCheckerOpsService) Start(ctx context.Context) error {
 					return
 				case <-ticker.C:
 					if err := checker.Healthy(ctx); err != nil {
-						o.resp.Store(name, 1)
-						o.log.Warnf("check service %s failed with error: %s", name, err)
+						if errors.Is(err, ErrHealthCheckServiceStarting) {
+							o.resp.Store(name, HealthCheckCodeServiceStarting)
+						} else {
+							o.resp.Store(name, HealthCheckCodeError)
+						}
+						o.log.Warnf("health check service %s failed with error: %s", name, err)
 					} else {
-						o.resp.Store(name, 0)
+						currentValue, existsValue := o.resp.Load(name)
+						o.resp.Store(name, HealthCheckCodeOk)
+						if existsValue {
+							if code, ok := currentValue.(HealthCheckCode); ok && code != HealthCheckCodeOk {
+								o.log.Infof("health check service %s fixed", name)
+							}
+						}
 					}
 
 					ticker.Reset(delay)
