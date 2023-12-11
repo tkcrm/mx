@@ -10,7 +10,7 @@ import (
 	"github.com/tkcrm/mx/logger"
 )
 
-type httpServer struct {
+type HttpServer struct {
 	Config
 
 	name   string
@@ -22,8 +22,8 @@ type httpServer struct {
 const defaultHTTPName = "http-server"
 
 // NewServer creates http server.
-func NewServer(opts ...Option) *httpServer {
-	serve := &httpServer{
+func NewServer(opts ...Option) *HttpServer {
+	serve := &HttpServer{
 		name:   defaultHTTPName,
 		logger: logger.DefaultExtended(),
 
@@ -38,13 +38,13 @@ func NewServer(opts ...Option) *httpServer {
 }
 
 // Name returns name of http server.
-func (s httpServer) Name() string { return s.name }
+func (s HttpServer) Name() string { return s.name }
 
 // Enabled returns is service enabled.
-func (s httpServer) Enabled() bool { return s.Config.Enabled }
+func (s HttpServer) Enabled() bool { return s.Config.Enabled }
 
 // Start allows starting http server.
-func (s *httpServer) Start(ctx context.Context) error {
+func (s *HttpServer) Start(ctx context.Context) error {
 	log := logger.WithExtended(
 		s.logger,
 		"name", s.name,
@@ -96,7 +96,7 @@ func (s *httpServer) Start(ctx context.Context) error {
 }
 
 // Stop allows stop http server.
-func (s *httpServer) Stop(ctx context.Context) error {
+func (s *HttpServer) Stop(ctx context.Context) error {
 	if s.server == nil {
 		return nil
 	}
