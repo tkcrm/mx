@@ -69,7 +69,7 @@ func (l *launcher) Run() error {
 	}
 
 	// start service
-	var errChan = make(chan error, len(l.servicesRunner.Services()))
+	errChan := make(chan error, len(l.servicesRunner.Services()))
 	graceWait := new(sync.WaitGroup)
 	graceWait.Add(len(l.servicesRunner.Services()))
 	for i := range l.servicesRunner.Services() {

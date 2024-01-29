@@ -59,8 +59,8 @@ func (s *Service) Start() error {
 		}
 	}
 
-	var errChan = make(chan error, 1)
-	var doneChan = make(chan struct{}, 1)
+	errChan := make(chan error, 1)
+	doneChan := make(chan struct{}, 1)
 	go func() {
 		if err := s.opts.StartFn(s.opts.Context); err != nil {
 			errChan <- err
@@ -131,8 +131,8 @@ func (s *Service) Stop() error {
 
 	s.opts.Logger.Infoln("stopping service", s.Name())
 
-	var errChan = make(chan error, 1)
-	var doneChan = make(chan struct{}, 1)
+	errChan := make(chan error, 1)
+	doneChan := make(chan struct{}, 1)
 	go func() {
 		if err := s.opts.StopFn(ctx); err != nil {
 			errChan <- err

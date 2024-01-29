@@ -127,7 +127,7 @@ func (s *gRPCServer) Start(ctx context.Context) error {
 		return err
 	}
 
-	var errChan = make(chan error, 1)
+	errChan := make(chan error, 1)
 	go func() {
 		if err := s.server.Serve(lis); err != nil {
 			errChan <- err

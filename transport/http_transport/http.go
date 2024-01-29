@@ -79,7 +79,7 @@ func (s *HttpServer) Start(ctx context.Context) error {
 		IdleTimeout:  60 * time.Second,
 	}
 
-	var errChan = make(chan error, 1)
+	errChan := make(chan error, 1)
 	go func() {
 		if err := s.server.Serve(lis); err != nil {
 			errChan <- err
