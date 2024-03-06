@@ -19,6 +19,8 @@ type options struct {
 	version       string
 	envFile       string
 	envPath       string
+	yamlFile      string
+	yamlPath      string
 	validate      bool
 	ctx           context.Context
 	validateFuncs []ValidateFn
@@ -54,6 +56,18 @@ func WithEnvFile(v string) Option {
 func WithEnvPath(v string) Option {
 	return func(o *options) {
 		o.envPath = v
+	}
+}
+
+func WithYamlFile(v string) Option {
+	return func(o *options) {
+		o.yamlFile = v
+	}
+}
+
+func WithYamlPath(v string) Option {
+	return func(o *options) {
+		o.yamlPath = v
 	}
 }
 

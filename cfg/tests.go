@@ -8,6 +8,8 @@ import (
 
 	"github.com/cristalhq/aconfig"
 	"github.com/cristalhq/aconfig/aconfigdotenv"
+	"github.com/cristalhq/aconfig/aconfigyaml"
+	"github.com/tkcrm/mx/util/files"
 )
 
 // LoadForTests environment variables from `os env`, `.env` file and pass it to struct for tests.
@@ -31,12 +33,16 @@ func LoadForTests(cfg any, opts ...Option) error {
 
 	options := newOptions(opts...)
 
+	pwdDir, err := os.Getwd()
+	if err != nil {
+		return err
+	}
 	if options.envPath == "" {
-		pwdDir, err := os.Getwd()
-		if err != nil {
-			return err
-		}
 		options.envPath = pwdDir
+	}
+
+	if options.yamlPath == "" {
+		options.yamlPath = pwdDir
 	}
 
 	c := config{
@@ -49,10 +55,21 @@ func LoadForTests(cfg any, opts ...Option) error {
 	aconf := aconfig.Config{
 		AllowUnknownFields: true,
 		SkipFlags:          true,
-		Files:              []string{path.Join(options.envPath, options.envFile)},
+		Files:              []string{},
 		FileDecoders: map[string]aconfig.FileDecoder{
-			options.envFile: aconfigdotenv.New(),
+			".env":  aconfigdotenv.New(),
+			".yaml": aconfigyaml.New(),
 		},
+	}
+
+	dotEnvFile := path.Join(options.envPath, options.envFile)
+	if files.ExistsPath(dotEnvFile) {
+		aconf.Files = append(aconf.Files, dotEnvFile)
+	}
+
+	yamlFile := path.Join(options.yamlPath, options.yamlFile)
+	if files.ExistsPath(yamlFile) {
+		aconf.Files = append(aconf.Files, yamlFile)
 	}
 
 	loader := aconfig.LoaderFor(cfg, aconf)
