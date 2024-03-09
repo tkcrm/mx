@@ -16,20 +16,24 @@ type ValidateFn struct {
 }
 
 type options struct {
-	version       string
-	envFile       string
-	envPath       string
-	validate      bool
-	ctx           context.Context
-	validateFuncs []ValidateFn
+	version            string
+	envFile            string
+	yamlFile           string
+	validate           bool
+	skipFlags          bool
+	allowUnknownFields bool
+	ctx                context.Context
+	validateFuncs      []ValidateFn
 }
 
 func newOptions(opts ...Option) *options {
 	opt := &options{
-		envFile:       ".env",
-		validate:      true,
-		ctx:           context.Background(),
-		validateFuncs: make([]ValidateFn, 0),
+		envFile:            ".env",
+		validate:           true,
+		skipFlags:          true,
+		allowUnknownFields: true,
+		ctx:                context.Background(),
+		validateFuncs:      make([]ValidateFn, 0),
 	}
 
 	for _, o := range opts {
@@ -45,21 +49,41 @@ func WithVersion(v string) Option {
 	}
 }
 
+// WithEnvFile - path to don env config file
 func WithEnvFile(v string) Option {
 	return func(o *options) {
 		o.envFile = v
 	}
 }
 
-func WithEnvPath(v string) Option {
+// WithYamlFile path to yaml config file
+func WithYamlFile(v string) Option {
 	return func(o *options) {
-		o.envPath = v
+		o.yamlFile = v
 	}
 }
 
 func WithValidate(v bool) Option {
 	return func(o *options) {
 		o.validate = v
+	}
+}
+
+// WithSkipFlags - skip flags parsing
+//
+// By default it true
+func WithSkipFlags(v bool) Option {
+	return func(o *options) {
+		o.skipFlags = v
+	}
+}
+
+// WithAllowUnknownFields - allow unknown fields in config
+//
+// By default it true
+func WithAllowUnknownFields(v bool) Option {
+	return func(o *options) {
+		o.allowUnknownFields = v
 	}
 }
 

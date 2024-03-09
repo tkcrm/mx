@@ -3,26 +3,24 @@ package cfg
 import (
 	"fmt"
 	"os"
-	"path"
 	"reflect"
 
 	"github.com/cristalhq/aconfig"
-	"github.com/cristalhq/aconfig/aconfigdotenv"
 )
 
-// LoadForTests environment variables from `os env`, `.env` file and pass it to struct for tests.
+// LoadForTests environment variables from `os env`, flags, `.env`, `.yaml` files and pass it to struct.
 //
 // Disabled flags detection and any cli features.
 //
 // For local development use `.env` file from root project.
 //
-// LoadForTests also call a `Validate` method.
+// LoadForTests also call a `Validate` method if it proided.
 //
 // Example:
 //
 //	var config internalConfig.Config
-//	if err := cfg.Load(&config); err != nil {
-//		log.Fatalf("could not load configuration: %v", err)
+//	if err := cfg.LoadForTests(&config); err != nil {
+//		logger.Fatalf("could not load configuration: %v", err)
 //	}
 func LoadForTests(cfg any, opts ...Option) error {
 	if reflect.ValueOf(cfg).Kind() != reflect.Ptr {
@@ -31,12 +29,9 @@ func LoadForTests(cfg any, opts ...Option) error {
 
 	options := newOptions(opts...)
 
-	if options.envPath == "" {
-		pwdDir, err := os.Getwd()
-		if err != nil {
-			return err
-		}
-		options.envPath = pwdDir
+	// validate options
+	if options.envFile == "" && options.yamlFile == "" {
+		return fmt.Errorf("env file or yaml file must be provided")
 	}
 
 	c := config{
@@ -46,13 +41,9 @@ func LoadForTests(cfg any, opts ...Option) error {
 		options: options,
 	}
 
-	aconf := aconfig.Config{
-		AllowUnknownFields: true,
-		SkipFlags:          true,
-		Files:              []string{path.Join(options.envPath, options.envFile)},
-		FileDecoders: map[string]aconfig.FileDecoder{
-			options.envFile: aconfigdotenv.New(),
-		},
+	aconf, err := getAconfig(c)
+	if err != nil {
+		return err
 	}
 
 	loader := aconfig.LoaderFor(cfg, aconf)

@@ -1,6 +1,8 @@
 package logger
 
 import (
+	"strings"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -12,7 +14,7 @@ func WithConfig(v Config) Option {
 }
 
 func WithLogLevel(v LogLevel) Option {
-	return func(l *logger) { l.config.Level = v.String() }
+	return func(l *logger) { l.config.Level = strings.ToLower(v.String()) }
 }
 
 func WithLogFormat(v LogFormat) Option {
