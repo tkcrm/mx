@@ -14,11 +14,19 @@ import (
 
 	"github.com/cristalhq/aconfig"
 	"github.com/cristalhq/aconfig/aconfigdotenv"
+	"github.com/cristalhq/aconfig/aconfigyaml"
 	"github.com/go-playground/validator/v10"
+	"github.com/tkcrm/mx/util/files"
 	"github.com/tkcrm/mx/util/structs"
 )
 
-var boolTrueValues = []string{"true", "1"}
+var (
+	boolTrueValues = []string{"true", "1"}
+	fileDecoders   = map[string]aconfig.FileDecoder{
+		".env":  aconfigdotenv.New(),
+		".yaml": aconfigyaml.New(),
+	}
+)
 
 type config struct {
 	options *options
@@ -35,17 +43,17 @@ type config struct {
 	markdown bool
 }
 
-// Load environment variables from `os env`, `.env` file and pass it to struct.
+// Load environment variables from `os env`, flags, `.env`, `.yaml` files and pass it to struct.
 //
 // For local development use `.env` file from root project.
 //
-// Load also call a `Validate` method.
+// Load also call a `Validate` method if it proided.
 //
 // Example:
 //
 //	var config internalConfig.Config
 //	if err := cfg.Load(&config); err != nil {
-//		log.Fatalf("could not load configuration: %v", err)
+//		logger.Fatalf("could not load configuration: %v", err)
 //	}
 func Load(cfg any, opts ...Option) error {
 	if reflect.ValueOf(cfg).Kind() != reflect.Ptr {
@@ -54,12 +62,9 @@ func Load(cfg any, opts ...Option) error {
 
 	options := newOptions(opts...)
 
-	if options.envPath == "" {
-		pwdDir, err := os.Getwd()
-		if err != nil {
-			return err
-		}
-		options.envPath = pwdDir
+	// validate options
+	if options.envFile == "" && options.yamlFile == "" {
+		return fmt.Errorf("env file or yaml file must be provided")
 	}
 
 	c := config{
@@ -69,13 +74,9 @@ func Load(cfg any, opts ...Option) error {
 		options: options,
 	}
 
-	aconf := aconfig.Config{
-		AllowUnknownFields: true,
-		SkipFlags:          true,
-		Files:              []string{path.Join(options.envPath, options.envFile)},
-		FileDecoders: map[string]aconfig.FileDecoder{
-			options.envFile: aconfigdotenv.New(),
-		},
+	aconf, err := getAconfig(c)
+	if err != nil {
+		return err
 	}
 
 	loader := aconfig.LoaderFor(cfg, aconf)
@@ -260,4 +261,30 @@ func getConfigFields(loader *aconfig.Loader) []configField {
 	})
 
 	return res
+}
+
+// getAconfig return aconfig.Config based on options
+func getAconfig(conf config) (aconfig.Config, error) {
+	pwdDir, err := os.Getwd()
+	if err != nil {
+		return aconfig.Config{}, err
+	}
+
+	aconf := aconfig.Config{
+		AllowUnknownFields: conf.options.allowUnknownFields,
+		SkipFlags:          conf.options.skipFlags,
+		FileDecoders:       fileDecoders,
+	}
+
+	dotEnvFile := path.Join(pwdDir, conf.options.envFile)
+	if files.ExistsPath(dotEnvFile) {
+		aconf.Files = append(aconf.Files, dotEnvFile)
+	}
+
+	yamlFile := path.Join(pwdDir, conf.options.yamlFile)
+	if files.ExistsPath(yamlFile) {
+		aconf.Files = append(aconf.Files, yamlFile)
+	}
+
+	return aconf, nil
 }
