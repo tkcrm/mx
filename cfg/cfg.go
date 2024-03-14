@@ -276,17 +276,17 @@ func getAconfig(conf config) (aconfig.Config, error) {
 		FileDecoders:       fileDecoders,
 	}
 
-	if conf.options.envFile != "" {
-		dotEnvFile := path.Join(pwdDir, conf.options.envFile)
-		if files.ExistsPath(dotEnvFile) {
-			aconf.Files = append(aconf.Files, dotEnvFile)
-		}
-	}
-
 	if conf.options.yamlFile != "" {
 		yamlFile := path.Join(pwdDir, conf.options.yamlFile)
 		if files.ExistsPath(yamlFile) {
 			aconf.Files = append(aconf.Files, yamlFile)
+		}
+	}
+
+	if conf.options.envFile != "" {
+		dotEnvFile := path.Join(pwdDir, conf.options.envFile)
+		if files.ExistsPath(dotEnvFile) {
+			aconf.Files = append(aconf.Files, dotEnvFile)
 		}
 	}
 
