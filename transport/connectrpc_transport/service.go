@@ -1,9 +1,13 @@
 package connectrpc_transport
 
-import "net/http"
+import (
+	"net/http"
+
+	"connectrpc.com/connect"
+)
 
 // IService custom interface for gRPC service.
 type ConnectRPCService interface {
 	Name() string
-	RegisterHandler() (string, http.Handler)
+	RegisterHandler(otps ...connect.HandlerOption) (string, http.Handler)
 }

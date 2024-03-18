@@ -3,6 +3,7 @@ package connectrpc_transport
 import (
 	"net/http"
 
+	"connectrpc.com/connect"
 	"connectrpc.com/grpcreflect"
 	"github.com/tkcrm/mx/logger"
 )
@@ -53,7 +54,7 @@ func WithReflector(v *grpcreflect.Reflector) Option {
 }
 
 // WithServerHandlerWrapper allows set custom server handler wrapper.
-func WithServerHandlerWrapper(v func() http.Handler) Option {
+func WithServerHandlerWrapper(v func(h http.Handler) http.Handler) Option {
 	return func(s *connectRPCServer) {
 		if v == nil {
 			return
@@ -65,4 +66,11 @@ func WithServerHandlerWrapper(v func() http.Handler) Option {
 // WithServices allows adding new gRPC Service.
 func WithServices(services ...ConnectRPCService) Option {
 	return func(s *connectRPCServer) { s.services = append(s.services, services...) }
+}
+
+// WithConnectRPCOptions allows adding new connect rpc options.
+func WithConnectRPCOptions(opts ...connect.HandlerOption) Option {
+	return func(s *connectRPCServer) {
+		s.connectrpcOpts = append(s.connectrpcOpts, opts...)
+	}
 }

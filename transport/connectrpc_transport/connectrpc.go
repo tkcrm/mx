@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"connectrpc.com/connect"
 	"connectrpc.com/grpcreflect"
 	"github.com/tkcrm/mx/logger"
 	"github.com/tkcrm/mx/service"
@@ -21,8 +22,9 @@ type connectRPCServer struct {
 	server               *http.ServeMux
 	logger               logger.Logger
 	services             []ConnectRPCService
-	serverHandlerWrapper func() http.Handler
+	serverHandlerWrapper func(http.Handler) http.Handler
 	reflector            *grpcreflect.Reflector
+	connectrpcOpts       []connect.HandlerOption
 }
 
 // NewServer creates a new gRPC server that implements service.IService interface.
@@ -52,7 +54,7 @@ func NewServer(opts ...Option) service.IService {
 
 		srv.logger.Infof("register connectrpc service: %s", srv.services[i].Name())
 
-		path, handler := srv.services[i].RegisterHandler()
+		path, handler := srv.services[i].RegisterHandler(srv.connectrpcOpts...)
 		srv.server.Handle(path, handler)
 	}
 
@@ -76,7 +78,7 @@ func (s *connectRPCServer) Start(ctx context.Context) error {
 
 	var handler http.Handler = s.server
 	if s.serverHandlerWrapper != nil {
-		handler = s.serverHandlerWrapper()
+		handler = s.serverHandlerWrapper(handler)
 	}
 
 	errChan := make(chan error, 1)
