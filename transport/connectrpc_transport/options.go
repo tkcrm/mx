@@ -47,9 +47,9 @@ func WithServer(v *http.ServeMux) Option {
 }
 
 // WithServer allows to use reflection for grpc server.
-func WithReflector(v *grpcreflect.Reflector) Option {
+func WithReflection(services ...string) Option {
 	return func(s *connectRPCServer) {
-		s.reflector = v
+		s.reflector = grpcreflect.NewStaticReflector(services...)
 	}
 }
 
