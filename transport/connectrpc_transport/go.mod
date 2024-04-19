@@ -3,7 +3,7 @@ module github.com/tkcrm/mx/transport/connectrpc_transport
 go 1.21
 
 require (
-	connectrpc.com/connect v1.15.0
+	connectrpc.com/connect v1.16.1
 	connectrpc.com/grpcreflect v1.2.0
 	github.com/tkcrm/mx v0.2.15
 )
