@@ -9,6 +9,8 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+const DefaultFlushDuration = time.Second * 2
+
 // InitSentryForZap init sentry for zap logger
 func InitSentryForZap(cfg Config, opts ...Option) (zap.Option, error) {
 	for _, opt := range opts {
@@ -66,8 +68,8 @@ func InitSentryForZap(cfg Config, opts ...Option) (zap.Option, error) {
 //
 // By default, the timeout is 2 seconds
 func Flush(timeout time.Duration) bool {
-	if timeout < time.Second*2 {
-		timeout = 2 * time.Second
+	if timeout < DefaultFlushDuration {
+		timeout = DefaultFlushDuration
 	}
 
 	return sentry.Flush(timeout)
