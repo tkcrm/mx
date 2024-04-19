@@ -10,7 +10,7 @@ type Config struct {
 	Network string `default:"tcp" required:"true" validate:"oneof=tcp udp" usage:"allows to set ops listen network: tcp/udp" example:"tcp"`
 
 	// Tracing
-	TracingEnabled bool `default:"false" usage:"allows to enable tracing" example:"false"`
+	TracingEnabled bool `yaml:"tracing_enabled" default:"false" usage:"allows to enable tracing" example:"false"`
 
 	// Metrics
 	Metrics MetricsConfig

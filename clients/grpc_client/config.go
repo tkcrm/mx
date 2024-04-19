@@ -11,7 +11,7 @@ type Config struct {
 	// Enabled  bool   `default:"true" usage:"allows to enable grpc client" example:"true"`
 	Name     string `default:"grpc-client" validate:"required" example:"backend-grpc-client"`
 	Addr     string `validate:"required" usage:"grpc server address" example:"localhost:9000"`
-	UseTls   bool   `default:"false" example:"false"`
+	UseTls   bool   `yaml:"use_tls" default:"false" example:"false"`
 	Insecure bool   `default:"false" example:"false"`
 	ctx      context.Context
 	grpsOpts []grpc.DialOption

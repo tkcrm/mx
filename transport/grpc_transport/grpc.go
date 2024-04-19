@@ -7,7 +7,6 @@ import (
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 	"github.com/tkcrm/mx/logger"
-	"github.com/tkcrm/mx/service"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
@@ -30,7 +29,7 @@ type gRPCServer struct {
 }
 
 // NewServer creates a new gRPC server that implements service.IService interface.
-func NewServer(opts ...Option) service.IService {
+func NewServer(opts ...Option) *gRPCServer {
 	srv := &gRPCServer{
 		name:   defaultGRPCName,
 		logger: logger.Default(),
