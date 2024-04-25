@@ -1,9 +1,6 @@
 package cfg
 
 import (
-	"context"
-	"errors"
-	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -15,9 +12,7 @@ import (
 	"github.com/cristalhq/aconfig"
 	"github.com/cristalhq/aconfig/aconfigdotenv"
 	"github.com/cristalhq/aconfig/aconfigyaml"
-	"github.com/go-playground/validator/v10"
 	"github.com/tkcrm/mx/util/files"
-	"github.com/tkcrm/mx/util/structs"
 )
 
 var (
@@ -31,16 +26,10 @@ var (
 type config struct {
 	options *options
 
-	filePath string
-	out      io.Writer
+	out io.Writer
 
 	args []string
 	exit func(int)
-
-	showHelp bool
-	showCurr bool
-	validate bool
-	markdown bool
 }
 
 // Load environment variables from `os env`, flags, `.env`, `.yaml` files and pass it to struct.
@@ -62,11 +51,6 @@ func Load(cfg any, opts ...Option) error {
 
 	options := newOptions(opts...)
 
-	// validate options
-	if options.envFile == "" && options.yamlFile == "" {
-		return fmt.Errorf("env file or yaml file must be provided")
-	}
-
 	c := config{
 		out:     os.Stdout,
 		exit:    os.Exit,
@@ -81,50 +65,8 @@ func Load(cfg any, opts ...Option) error {
 
 	loader := aconfig.LoaderFor(cfg, aconf)
 
-	flags := loader.Flags()
-	flags.SetOutput(c.out)
-	flags.Usage = func() { c.renderHelp(loader, flags) }
-
-	c.attachFlags(flags)
-
-	if err := flags.Parse(c.args); err != nil && !errors.Is(err, flag.ErrHelp) {
-		return fmt.Errorf("could not parse flags: %w", err)
-	}
-
 	if err := loader.Load(); err != nil {
 		return err
-	}
-
-	switch {
-	default:
-	case c.showCurr:
-		// on version requested
-		c.print("Version: " + options.version)
-
-		c.exit(0)
-
-	case c.markdown:
-		// on markdown requested
-		c.generateMarkdown(loader)
-
-		c.exit(0)
-
-	case c.showHelp:
-		// on help requested
-		c.renderHelp(loader, flags)
-
-		c.exit(0)
-
-	case c.validate:
-		// on validate requested
-		if err := c.validateEnvs(cfg, loader); err != nil {
-			fmt.Println(err)
-			c.exit(2)
-		}
-
-		c.print("OK")
-
-		c.exit(0)
 	}
 
 	if options.validate {
@@ -138,79 +80,6 @@ func Load(cfg any, opts ...Option) error {
 
 func (c *config) print(value string) {
 	_, _ = fmt.Fprintln(c.out, value)
-}
-
-func (c *config) validateEnvs(cfg any, loader *aconfig.Loader) error {
-	if err := validateElem(c.options.ctx, cfg); err != nil {
-		return err
-	}
-
-	val := reflect.ValueOf(cfg).Elem()
-	for i := 0; i < val.NumField(); i++ {
-		if err := validateElem(c.options.ctx, val.Field(i).Addr().Interface()); err != nil {
-			return err
-		}
-	}
-
-	// init validator
-	validate := validator.New()
-	for _, item := range c.options.validateFuncs {
-		validate.RegisterValidation(item.Tag, item.Fn, item.CallValidationEvenIfNull...)
-	}
-
-	// validate struct
-	errs := []string{}
-	configFields := getConfigFields(loader)
-	for _, f := range configFields {
-		if f.disableValidation || f.validateParams == "" {
-			continue
-		}
-
-		fieldValue, err := structs.LookupString(cfg, f.path)
-		if err != nil {
-			return err
-		}
-
-		if err := validate.Var(fieldValue.Interface(), f.validateParams); err != nil {
-			errs = append(errs,
-				strings.ReplaceAll(
-					err.Error(),
-					"Key: '' Error:Field validation for ''",
-					fmt.Sprintf("Validate %s env error:", f.envName),
-				),
-			)
-		}
-	}
-
-	if len(errs) > 0 {
-		return errors.New(strings.Join(errs, "; "))
-	}
-
-	return nil
-}
-
-func validateElem(ctx context.Context, elem any) error {
-	// try to validate with Validate() error
-	if tmp, ok := elem.(interface {
-		Validate() error
-	}); ok {
-		if err := tmp.Validate(); err != nil {
-			return err
-		}
-	}
-
-	// try to validate with Validate(ctx context.Context) error
-	if ctx != nil {
-		if tmp, ok := elem.(interface {
-			Validate(ctx context.Context) error
-		}); ok {
-			if err := tmp.Validate(ctx); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
 }
 
 func getConfigFields(loader *aconfig.Loader) []configField {
@@ -270,23 +139,13 @@ func getAconfig(conf config) (aconfig.Config, error) {
 		return aconfig.Config{}, err
 	}
 
-	aconf := aconfig.Config{
-		AllowUnknownFields: conf.options.allowUnknownFields,
-		SkipFlags:          conf.options.skipFlags,
-		FileDecoders:       fileDecoders,
-	}
+	aconf := conf.options.loaderConfig
+	aconf.FileDecoders = fileDecoders
 
-	if conf.options.yamlFile != "" {
-		yamlFile := path.Join(pwdDir, conf.options.yamlFile)
-		if files.ExistsPath(yamlFile) {
-			aconf.Files = append(aconf.Files, yamlFile)
-		}
-	}
-
-	if conf.options.envFile != "" {
-		dotEnvFile := path.Join(pwdDir, conf.options.envFile)
-		if files.ExistsPath(dotEnvFile) {
-			aconf.Files = append(aconf.Files, dotEnvFile)
+	for _, file := range aconf.Files {
+		fpath := path.Join(pwdDir, file)
+		if !files.ExistsPath(fpath) {
+			return aconfig.Config{}, fmt.Errorf("config file not found: %s", fpath)
 		}
 	}
 

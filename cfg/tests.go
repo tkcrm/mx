@@ -29,11 +29,6 @@ func LoadForTests(cfg any, opts ...Option) error {
 
 	options := newOptions(opts...)
 
-	// validate options
-	if options.envFile == "" && options.yamlFile == "" {
-		return fmt.Errorf("env file or yaml file must be provided")
-	}
-
 	c := config{
 		out:     os.Stdout,
 		exit:    os.Exit,

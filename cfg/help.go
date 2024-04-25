@@ -1,12 +1,38 @@
 package cfg
 
 import (
-	"flag"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/cristalhq/aconfig"
 )
+
+func GenerateDefaultEnvs(cfg any, filePath string, opts ...Option) error {
+	options := newOptions(opts...)
+
+	c := config{
+		out:     os.Stdout,
+		exit:    os.Exit,
+		args:    os.Args[1:],
+		options: options,
+	}
+
+	aconf, err := getAconfig(c)
+	if err != nil {
+		return err
+	}
+
+	loader := aconfig.LoaderFor(cfg, aconf)
+
+	if err := loader.Load(); err != nil {
+		return err
+	}
+
+	loader.WalkFields(c.generateDefaultEnvs)
+
+	return nil
+}
 
 func (c *config) generateDefaultEnvs(field aconfig.Field) bool {
 	value := field.Tag("default")
@@ -42,19 +68,4 @@ func (c *config) generateDefaultEnvs(field aconfig.Field) bool {
 	c.print(line.String())
 
 	return true
-}
-
-func (c *config) renderHelp(l *aconfig.Loader, fs *flag.FlagSet) {
-	output := fs.Output()
-
-	_, _ = fmt.Fprintln(output, "Usage:")
-	_, _ = fmt.Fprintln(output)
-
-	c.renderFlags(fs)
-
-	var out strings.Builder
-
-	_, _ = fmt.Fprintf(output, "\nDefault envs:\n%s\n", out.String())
-
-	l.WalkFields(c.generateDefaultEnvs)
 }

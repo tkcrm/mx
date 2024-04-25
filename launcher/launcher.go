@@ -33,6 +33,7 @@ type launcher struct {
 	servicesRunner *servicesRunner
 }
 
+// New creates a new launcher
 func New(opts ...Option) ILauncher {
 	l := &launcher{
 		opts: newOptions(opts...),
@@ -47,6 +48,7 @@ func New(opts ...Option) ILauncher {
 	return l
 }
 
+// Run runs launcher and all services
 func (l *launcher) Run() error {
 	// register ops services
 	if l.opts.OpsConfig.Enabled {
@@ -173,14 +175,11 @@ func (l *launcher) Run() error {
 	return stopErr
 }
 
-func (l *launcher) Stop() {
-	l.cancelFn()
-}
+// Stop stops launcher and all services
+func (l *launcher) Stop() { l.cancelFn() }
 
-func (l *launcher) ServicesRunner() IServicesRunner {
-	return l.servicesRunner
-}
+// ServicesRunner returns services runner
+func (l *launcher) ServicesRunner() IServicesRunner { return l.servicesRunner }
 
-func (l *launcher) Context() context.Context {
-	return l.opts.Context
-}
+// Context returns global context
+func (l *launcher) Context() context.Context { return l.opts.Context }

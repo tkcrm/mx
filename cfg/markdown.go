@@ -3,6 +3,7 @@ package cfg
 import (
 	"fmt"
 	"os"
+	"reflect"
 	"strings"
 	"unicode/utf8"
 
@@ -11,7 +12,35 @@ import (
 
 const cellSeparator = "|"
 
-func (c *config) generateMarkdown(l *aconfig.Loader) {
+func GenerateMarkdown(cfg any, filePath string, opts ...Option) error {
+	if reflect.ValueOf(cfg).Kind() != reflect.Ptr {
+		return fmt.Errorf("config must be a pointer")
+	}
+
+	options := newOptions(opts...)
+
+	c := config{
+		out:     os.Stdout,
+		exit:    os.Exit,
+		args:    os.Args[1:],
+		options: options,
+	}
+
+	aconf, err := getAconfig(c)
+	if err != nil {
+		return err
+	}
+
+	loader := aconfig.LoaderFor(cfg, aconf)
+
+	if err := loader.Load(); err != nil {
+		return err
+	}
+
+	return c.generateMarkdown(loader, filePath)
+}
+
+func (c *config) generateMarkdown(l *aconfig.Loader, filePath string) error {
 	var table [][]string
 
 	table = append(table, []string{
@@ -86,12 +115,13 @@ func (c *config) generateMarkdown(l *aconfig.Loader) {
 
 	_, _ = fmt.Fprintln(c.out, out.String())
 
-	if c.filePath != "" {
-		if err := os.WriteFile(c.filePath, []byte(out.String()), os.ModePerm); err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+	if filePath != "" {
+		if err := os.WriteFile(filePath, []byte(out.String()), os.ModePerm); err != nil {
+			return err
 		}
 	}
+
+	return nil
 }
 
 func boolIcon(value bool) string {
