@@ -3,12 +3,17 @@ package cfg
 import (
 	"fmt"
 	"os"
+	"reflect"
 
 	"gopkg.in/yaml.v3"
 )
 
-func GenerateYamlTemplate(path string, config any) error {
-	data, err := yaml.Marshal(config)
+func GenerateYamlTemplate(cfg any, path string) error {
+	if reflect.ValueOf(cfg).Kind() != reflect.Ptr {
+		return fmt.Errorf("config must be a pointer")
+	}
+
+	data, err := yaml.Marshal(cfg)
 	if err != nil {
 		return fmt.Errorf("marshal config error: %w", err)
 	}
