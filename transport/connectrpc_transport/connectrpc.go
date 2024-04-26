@@ -3,6 +3,7 @@ package connectrpc_transport
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"connectrpc.com/connect"
 	"connectrpc.com/grpcreflect"
@@ -81,9 +82,18 @@ func (s *connectRPCServer) Start(ctx context.Context) error {
 		handler = s.serverHandlerWrapper(handler)
 	}
 
+	srv := &http.Server{
+		Addr:              s.Addr,
+		Handler:           handler,
+		ReadHeaderTimeout: time.Second,
+		ReadTimeout:       5 * time.Minute,
+		WriteTimeout:      5 * time.Minute,
+		MaxHeaderBytes:    8 * 1024, // 8KiB
+	}
+
 	errChan := make(chan error, 1)
 	go func() {
-		if err := http.ListenAndServe(s.Addr, handler); err != nil {
+		if err := srv.ListenAndServe(); err != nil {
 			errChan <- err
 		}
 	}()
