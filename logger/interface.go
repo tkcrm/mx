@@ -16,13 +16,6 @@ type WriteSyncer = zapcore.WriteSyncer
 // Type alias.
 type Sink = zap.Sink
 
-type LogFormat string
-
-const (
-	LoggerFormatConsole LogFormat = "console"
-	LoggerFormatJSON    LogFormat = "json"
-)
-
 // A SugaredLogger wraps the base Logger functionality in a slower, but less
 // verbose, API. Any Logger can be converted to a SugaredLogger with its Sugar
 // method.
@@ -31,6 +24,7 @@ type sugaredLogger = zap.SugaredLogger
 
 type ExtendedLogger interface {
 	Logger
+	Sync() error
 	Std() *log.Logger
 	Sugar() *sugaredLogger
 }
@@ -66,6 +60,4 @@ type Logger interface {
 	Panicln(...any)
 	Panicf(template string, args ...any)
 	Panicw(msg string, keysAndValues ...any)
-
-	Sync() error
 }
