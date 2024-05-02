@@ -37,7 +37,6 @@ require (
 	github.com/cristalhq/aconfig v0.18.5
 	github.com/cristalhq/aconfig/aconfigdotenv v0.17.1
 	github.com/cristalhq/aconfig/aconfigyaml v0.17.1
-	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/prometheus/client_golang v1.19.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.51.0
 	go.uber.org/multierr v1.11.0 // indirect

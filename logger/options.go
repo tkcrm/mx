@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
 type Option func(*logger)
@@ -14,14 +13,14 @@ func WithConfig(v Config) Option {
 }
 
 func WithLogLevel(v LogLevel) Option {
-	return func(l *logger) { l.config.Level = strings.ToLower(v.String()) }
+	return func(l *logger) { l.config.Level = LogLevel(strings.ToLower(v.String())) }
 }
 
 func WithLogFormat(v LogFormat) Option {
 	return func(l *logger) {
 		switch v {
 		case LoggerFormatConsole, LoggerFormatJSON:
-			l.logFormat = v
+			l.config.Format = v
 		}
 	}
 }
@@ -29,7 +28,7 @@ func WithLogFormat(v LogFormat) Option {
 // WithConsoleColored allows to set colored console output.
 func WithConsoleColored(v bool) Option {
 	return func(l *logger) {
-		l.zapConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+		l.config.ConsoleColored = v
 	}
 }
 

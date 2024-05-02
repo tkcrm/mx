@@ -6,7 +6,22 @@ import (
 
 type LogLevel string
 
+// String returns log level as string.
 func (l LogLevel) String() string { return string(l) }
+
+// Valid checks if log level is valid.
+func (l LogLevel) Valid() bool {
+	switch l {
+	case LogLevelDebug,
+		LogLevelInfo,
+		LogLevelWarn,
+		LogLevelError,
+		LogLevelFatal,
+		LogLevelPanic:
+		return true
+	}
+	return false
+}
 
 const (
 	LogLevelDebug LogLevel = "debug"
@@ -16,16 +31,6 @@ const (
 	LogLevelFatal LogLevel = "fatal"
 	LogLevelPanic LogLevel = "panic"
 )
-
-// GetAllLevels return all log levels. Used in validation.
-var allLevels = []any{
-	LogLevelDebug.String(),
-	LogLevelInfo.String(),
-	LogLevelWarn.String(),
-	LogLevelError.String(),
-	LogLevelFatal.String(),
-	LogLevelPanic.String(),
-}
 
 // safeLevel converts string representation into log level.
 func safeLevel(level LogLevel) zapcore.Level {

@@ -37,5 +37,5 @@ func Test_LoggerWith(t *testing.T) {
 
 	l = logger.With(l, "key3", "value3")
 
-	l.Infof("some test value: %d", 1234)
+	l.Infow("some test value", "numbers", 1234)
 }

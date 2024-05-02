@@ -14,8 +14,6 @@ type logger struct {
 	appName    string
 	appVersion string
 
-	logFormat LogFormat
-
 	zapConfig zapcore.EncoderConfig
 	options   []zap.Option
 
@@ -83,7 +81,6 @@ func With(l Logger, args ...any) Logger {
 		lg.config,
 		lg.appName,
 		lg.appVersion,
-		lg.logFormat,
 		lg.zapConfig,
 		lg.options,
 		lg.sugaredLogger.With(args...),
@@ -103,7 +100,6 @@ func WithExtended(l ExtendedLogger, args ...any) ExtendedLogger {
 		lg.config,
 		lg.appName,
 		lg.appVersion,
-		lg.logFormat,
 		lg.zapConfig,
 		lg.options,
 		lg.sugaredLogger.With(args...),
@@ -124,8 +120,11 @@ func initLogger(opts ...Option) *logger {
 	l.zapConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 
 	encoder := zapcore.NewJSONEncoder(l.zapConfig)
-	switch l.logFormat {
+	switch l.config.Format {
 	case LoggerFormatConsole:
+		if l.config.ConsoleColored {
+			l.zapConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+		}
 		encoder = zapcore.NewConsoleEncoder(l.zapConfig)
 	}
 
