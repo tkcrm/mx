@@ -37,12 +37,22 @@ func WithLogger(v logger.Logger) Option {
 }
 
 // WithServer allows set custom gRPC Server.
-func WithServer(v *http.ServeMux) Option {
+func WithServeMux(v *http.ServeMux) Option {
 	return func(s *connectRPCServer) {
 		if v == nil {
 			return
 		}
-		s.server = v
+		s.serveMux = v
+	}
+}
+
+// WithHttpServer allows set custom http.Server.
+func WithHttpServer(v *http.Server) Option {
+	return func(s *connectRPCServer) {
+		if s == nil {
+			return
+		}
+		s.httpServer = v
 	}
 }
 
