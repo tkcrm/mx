@@ -20,7 +20,8 @@ type connectRPCServer struct {
 	Config
 
 	name                 string
-	server               *http.ServeMux
+	httpServer           *http.Server
+	serveMux             *http.ServeMux
 	logger               logger.Logger
 	services             []ConnectRPCService
 	serverHandlerWrapper func(http.Handler) http.Handler
@@ -31,9 +32,9 @@ type connectRPCServer struct {
 // NewServer creates a new gRPC server that implements service.IService interface.
 func NewServer(opts ...Option) service.IService {
 	srv := &connectRPCServer{
-		name:   defaultServiceName,
-		logger: logger.Default(),
-		server: http.NewServeMux(),
+		name:     defaultServiceName,
+		logger:   logger.Default(),
+		serveMux: http.NewServeMux(),
 
 		Config: Config{
 			Enabled: true,
@@ -56,12 +57,12 @@ func NewServer(opts ...Option) service.IService {
 		srv.logger.Infof("register connectrpc service: %s", srv.services[i].Name())
 
 		path, handler := srv.services[i].RegisterHandler(srv.connectrpcOpts...)
-		srv.server.Handle(path, handler)
+		srv.serveMux.Handle(path, handler)
 	}
 
 	if srv.reflector != nil {
-		srv.server.Handle(grpcreflect.NewHandlerV1(srv.reflector))
-		srv.server.Handle(grpcreflect.NewHandlerV1Alpha(srv.reflector))
+		srv.serveMux.Handle(grpcreflect.NewHandlerV1(srv.reflector))
+		srv.serveMux.Handle(grpcreflect.NewHandlerV1Alpha(srv.reflector))
 	}
 
 	return srv
@@ -77,23 +78,24 @@ func (s *connectRPCServer) Enabled() bool { return s.Config.Enabled }
 func (s *connectRPCServer) Start(ctx context.Context) error {
 	s.logger.Infof("prepare listener %s on %s", s.name, s.Addr)
 
-	var handler http.Handler = s.server
+	var handler http.Handler = s.serveMux
 	if s.serverHandlerWrapper != nil {
 		handler = s.serverHandlerWrapper(handler)
 	}
 
-	srv := &http.Server{
-		Addr:              s.Addr,
-		Handler:           handler,
-		ReadHeaderTimeout: time.Second,
-		ReadTimeout:       5 * time.Minute,
-		WriteTimeout:      5 * time.Minute,
-		MaxHeaderBytes:    8 * 1024, // 8KiB
+	if s.httpServer == nil {
+		s.httpServer = &http.Server{
+			Addr:              s.Addr,
+			Handler:           handler,
+			ReadHeaderTimeout: time.Second * 10,
+		}
+	} else {
+		s.httpServer.Handler = handler
 	}
 
 	errChan := make(chan error, 1)
 	go func() {
-		if err := srv.ListenAndServe(); err != nil {
+		if err := s.httpServer.ListenAndServe(); err != nil {
 			errChan <- err
 		}
 	}()
@@ -108,4 +110,9 @@ func (s *connectRPCServer) Start(ctx context.Context) error {
 }
 
 // Stop allows to stop server.
-func (s *connectRPCServer) Stop(context.Context) error { return nil }
+func (s *connectRPCServer) Stop(ctx context.Context) error {
+	if s.httpServer == nil {
+		return nil
+	}
+	return s.httpServer.Shutdown(ctx)
+}
