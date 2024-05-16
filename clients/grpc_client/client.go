@@ -24,6 +24,14 @@ func New[T any](
 		o(&config)
 	}
 
+	if config.Name == "" {
+		return nilIface, fmt.Errorf("empty name for grpc client")
+	}
+
+	if config.Addr == "" {
+		return nilIface, fmt.Errorf("empty address")
+	}
+
 	if config.UseTls {
 		config.grpsOpts = append(config.grpsOpts,
 			grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{InsecureSkipVerify: false})),

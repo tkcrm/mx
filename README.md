@@ -13,9 +13,11 @@ A Go microservices framework with runtime launcher and services runner
 - [x] Metrics
 - [x] Health checker
 - [x] Ping pong service
-- [x] GRPC transport
 - [x] Http transport
+- [x] GRPC transport
+- [x] GRPC client
 - [x] ConnectRPC transport
+- [x] ConnectRPC client
 - [x] Config loader
 
 ## How to use
