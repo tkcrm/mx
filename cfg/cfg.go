@@ -102,7 +102,7 @@ func getConfigFields(loader *aconfig.Loader) []configField {
 			newField.isSecret = true
 		}
 
-		if slices.Contains(boolTrueValues, strings.ToLower(f.Tag("disableValidation"))) {
+		if slices.Contains(boolTrueValues, strings.ToLower(f.Tag("disable_validation"))) {
 			newField.disableValidation = true
 		}
 
@@ -120,6 +120,14 @@ func getConfigFields(loader *aconfig.Loader) []configField {
 			}
 
 			envName = fmt.Sprintf("%s_%s", field.Tag("env"), envName)
+
+			if !newField.disableValidation &&
+				slices.Contains(
+					boolTrueValues,
+					strings.ToLower(field.Tag("disable_validation")),
+				) {
+				newField.disableValidation = true
+			}
 		}
 
 		newField.envName = envName
