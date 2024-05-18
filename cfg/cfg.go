@@ -20,6 +20,7 @@ var (
 	fileDecoders   = map[string]aconfig.FileDecoder{
 		".env":  aconfigdotenv.New(),
 		".yaml": aconfigyaml.New(),
+		".yml":  aconfigyaml.New(),
 	}
 )
 

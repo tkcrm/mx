@@ -56,8 +56,13 @@ func (c *config) generateMarkdown(l *aconfig.Loader, filePath string) error {
 
 	configFields := getConfigFields(l)
 	for _, f := range configFields {
+		envName := f.envName
+		if c.options.loaderConfig.EnvPrefix != "" {
+			envName = c.options.loaderConfig.EnvPrefix + "_" + envName
+		}
+
 		cell := []string{
-			"`" + f.envName + "`",
+			"`" + envName + "`",
 			boolIcon(f.isRequired),
 			boolIcon(f.isSecret),
 			codeBlock(f.defaultValue),
