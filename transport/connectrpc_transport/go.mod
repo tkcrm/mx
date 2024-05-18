@@ -5,7 +5,7 @@ go 1.21
 require (
 	connectrpc.com/connect v1.16.2
 	connectrpc.com/grpcreflect v1.2.0
-	github.com/tkcrm/mx v0.2.20
+	github.com/tkcrm/mx v0.2.22
 )
 
 require (
