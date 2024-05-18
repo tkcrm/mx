@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0
-	github.com/tkcrm/mx v0.2.20
+	github.com/tkcrm/mx v0.2.22
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.51.0
 	google.golang.org/grpc v1.64.0
 )
