@@ -92,7 +92,7 @@ func (s *Service) Start() error {
 
 	// grace stop Start func
 	select {
-	case <-time.After(time.Second * 10):
+	case <-time.After(s.opts.ShutdownTimeout):
 		s.opts.Logger.Infof("service [%s] was stopped by timeout", s.Name())
 	case <-doneChan:
 	}
@@ -150,7 +150,7 @@ func (s *Service) Stop() error {
 		return err
 	// stop by context
 	case <-ctx.Done():
-		s.opts.Logger.Infof("failed to stop service [%s]. stop by context", s.Name())
+		s.opts.Logger.Infof("failed to stop service [%s]. stop by timeout", s.Name())
 	}
 
 	for _, fn := range s.opts.AfterStop {
