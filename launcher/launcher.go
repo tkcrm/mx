@@ -23,6 +23,15 @@ type ILauncher interface {
 	ServicesRunner() IServicesRunner
 	// Context return global context
 	Context() context.Context
+
+	// AddBeforeStartHooks adds before start hooks
+	AddBeforeStartHooks(hook ...func() error)
+	// AddBeforeStopHooks adds before stop hooks
+	AddBeforeStopHooks(hook ...func() error)
+	// AddAfterStartHooks adds after start hooks
+	AddAfterStartHooks(hook ...func() error)
+	// AddAfterStopHooks adds after stop hooks
+	AddAfterStopHooks(hook ...func() error)
 }
 
 type launcher struct {
@@ -84,15 +93,15 @@ func (l *launcher) Run() error {
 		}(l.servicesRunner.Services()[i])
 	}
 
+	if l.opts.AppStartStopLog {
+		l.opts.logger.Infoln("app", l.opts.Name, "was started")
+	}
+
 	// after start
 	for _, fn := range l.opts.AfterStart {
 		if err := fn(); err != nil {
 			return err
 		}
-	}
-
-	if l.opts.AppStartStopLog {
-		l.opts.logger.Infoln("app", l.opts.Name, "was started")
 	}
 
 	ch := make(chan os.Signal, 1)
@@ -161,15 +170,15 @@ func (l *launcher) Run() error {
 		}
 	}
 
+	if l.opts.AppStartStopLog {
+		l.opts.logger.Infoln("app", l.opts.Name, "was stopped")
+	}
+
 	// after stop
 	for _, fn := range l.opts.AfterStop {
 		if err := fn(); err != nil {
 			stopErr = err
 		}
-	}
-
-	if l.opts.AppStartStopLog {
-		l.opts.logger.Infoln("app", l.opts.Name, "was stopped")
 	}
 
 	return stopErr
@@ -183,3 +192,43 @@ func (l *launcher) ServicesRunner() IServicesRunner { return l.servicesRunner }
 
 // Context returns global context
 func (l *launcher) Context() context.Context { return l.opts.Context }
+
+// AddBeforeStartHooks adds before start hooks
+func (l *launcher) AddBeforeStartHooks(hook ...func() error) {
+	for _, fn := range hook {
+		if fn == nil {
+			continue
+		}
+		l.opts.BeforeStart = append(l.opts.BeforeStart, fn)
+	}
+}
+
+// AddBeforeStopHooks adds before stop hooks
+func (l *launcher) AddBeforeStopHooks(hook ...func() error) {
+	for _, fn := range hook {
+		if fn == nil {
+			continue
+		}
+		l.opts.BeforeStop = append(l.opts.BeforeStop, fn)
+	}
+}
+
+// AddAfterStartHooks adds after start hooks
+func (l *launcher) AddAfterStartHooks(hook ...func() error) {
+	for _, fn := range hook {
+		if fn == nil {
+			continue
+		}
+		l.opts.AfterStart = append(l.opts.AfterStart, fn)
+	}
+}
+
+// AddAfterStopHooks adds after stop hooks
+func (l *launcher) AddAfterStopHooks(hook ...func() error) {
+	for _, fn := range hook {
+		if fn == nil {
+			continue
+		}
+		l.opts.AfterStop = append(l.opts.AfterStop, fn)
+	}
+}
