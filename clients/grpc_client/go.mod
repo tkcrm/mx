@@ -2,7 +2,7 @@ module github.com/tkcrm/mx/clients/grpc_client
 
 go 1.21
 
-require google.golang.org/grpc v1.64.0
+require google.golang.org/grpc v1.64.1
 
 require (
 	golang.org/x/net v0.26.0 // indirect
