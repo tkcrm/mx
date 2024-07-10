@@ -19,7 +19,7 @@ const (
 	defaultGRPCNetwork = "tcp"
 )
 
-type gRPCServer struct {
+type GRPCServer struct {
 	Config
 
 	name     string
@@ -29,8 +29,8 @@ type gRPCServer struct {
 }
 
 // NewServer creates a new gRPC server that implements service.IService interface.
-func NewServer(opts ...Option) *gRPCServer {
-	srv := &gRPCServer{
+func NewServer(opts ...Option) *GRPCServer {
+	srv := &GRPCServer{
 		name:   defaultGRPCName,
 		logger: logger.Default(),
 
@@ -49,14 +49,10 @@ func NewServer(opts ...Option) *gRPCServer {
 
 	if srv.server == nil {
 		// define unary interceptors
-		unaryInterceptors := []grpc.UnaryServerInterceptor{
-			otelgrpc.UnaryServerInterceptor(),
-		}
+		unaryInterceptors := []grpc.UnaryServerInterceptor{}
 
 		// define stream interceptors
-		streamInterceptors := []grpc.StreamServerInterceptor{
-			otelgrpc.StreamServerInterceptor(),
-		}
+		streamInterceptors := []grpc.StreamServerInterceptor{}
 
 		// add logger
 		if srv.LoggerEnabled {
@@ -79,6 +75,7 @@ func NewServer(opts ...Option) *gRPCServer {
 
 		// define grpc server options
 		srvOpts := []grpc.ServerOption{
+			grpc.StatsHandler(otelgrpc.NewServerHandler()),
 			grpc.ChainUnaryInterceptor(unaryInterceptors...),
 			grpc.ChainStreamInterceptor(streamInterceptors...),
 		}
@@ -110,13 +107,13 @@ func NewServer(opts ...Option) *gRPCServer {
 }
 
 // Name returns name of gRPC server.
-func (s *gRPCServer) Name() string { return s.name }
+func (s *GRPCServer) Name() string { return s.name }
 
 // Enabled returns is service enabled.
-func (s *gRPCServer) Enabled() bool { return s.Config.Enabled }
+func (s *GRPCServer) Enabled() bool { return s.Config.Enabled }
 
 // Start allows starting gRPC server.
-func (s *gRPCServer) Start(ctx context.Context) error {
+func (s *GRPCServer) Start(ctx context.Context) error {
 	s.logger.Infof("prepare listener %s on %s / %s",
 		s.name, s.Addr, s.Network,
 	)
@@ -137,13 +134,12 @@ func (s *gRPCServer) Start(ctx context.Context) error {
 	case err := <-errChan:
 		return err
 	case <-ctx.Done():
+		return nil
 	}
-
-	return nil
 }
 
 // Stop allows to stop grpc server.
-func (s *gRPCServer) Stop(context.Context) error {
+func (s *GRPCServer) Stop(context.Context) error {
 	if s.server == nil {
 		return nil
 	}
