@@ -6,7 +6,7 @@ import (
 )
 
 // Option allows customizing gRPC server.
-type Option func(s *gRPCServer)
+type Option func(s *GRPCServer)
 
 // GRPCService custom interface for gRPC service.
 type GRPCService interface {
@@ -16,7 +16,7 @@ type GRPCService interface {
 
 // WithName allows set custom gRPC Name.
 func WithName(v string) Option {
-	return func(s *gRPCServer) {
+	return func(s *GRPCServer) {
 		if v == "" {
 			return
 		}
@@ -26,12 +26,12 @@ func WithName(v string) Option {
 
 // WithConfig allows set custom gRPC settings.
 func WithConfig(v Config) Option {
-	return func(s *gRPCServer) { s.Config = v }
+	return func(s *GRPCServer) { s.Config = v }
 }
 
 // WithLogger allows set custom gRPC Logger.
 func WithLogger(v logger.Logger) Option {
-	return func(s *gRPCServer) {
+	return func(s *GRPCServer) {
 		if v == nil {
 			return
 		}
@@ -41,7 +41,7 @@ func WithLogger(v logger.Logger) Option {
 
 // WithServer allows set custom gRPC Server.
 func WithServer(v *grpc.Server) Option {
-	return func(s *gRPCServer) {
+	return func(s *GRPCServer) {
 		if v == nil {
 			return
 		}
@@ -51,5 +51,5 @@ func WithServer(v *grpc.Server) Option {
 
 // WithServices allows adding new gRPC Service.
 func WithServices(services ...GRPCService) Option {
-	return func(s *gRPCServer) { s.services = append(s.services, services...) }
+	return func(s *GRPCServer) { s.services = append(s.services, services...) }
 }
