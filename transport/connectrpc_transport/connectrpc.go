@@ -8,7 +8,6 @@ import (
 	"connectrpc.com/connect"
 	"connectrpc.com/grpcreflect"
 	"github.com/tkcrm/mx/logger"
-	"github.com/tkcrm/mx/service"
 )
 
 const (
@@ -16,7 +15,7 @@ const (
 	defaultServerAddress = ":9000"
 )
 
-type connectRPCServer struct {
+type ConnectRPCServer struct {
 	Config
 
 	name                 string
@@ -30,8 +29,8 @@ type connectRPCServer struct {
 }
 
 // NewServer creates a new gRPC server that implements service.IService interface.
-func NewServer(opts ...Option) service.IService {
-	srv := &connectRPCServer{
+func NewServer(opts ...Option) *ConnectRPCServer {
+	srv := &ConnectRPCServer{
 		name:     defaultServiceName,
 		logger:   logger.Default(),
 		serveMux: http.NewServeMux(),
@@ -69,13 +68,13 @@ func NewServer(opts ...Option) service.IService {
 }
 
 // Name returns name of server.
-func (s *connectRPCServer) Name() string { return s.name }
+func (s *ConnectRPCServer) Name() string { return s.name }
 
 // Enabled returns is service enabled.
-func (s *connectRPCServer) Enabled() bool { return s.Config.Enabled }
+func (s *ConnectRPCServer) Enabled() bool { return s.Config.Enabled }
 
 // Start allows starting server.
-func (s *connectRPCServer) Start(ctx context.Context) error {
+func (s *ConnectRPCServer) Start(ctx context.Context) error {
 	s.logger.Infof("prepare listener %s on %s", s.name, s.Addr)
 
 	var handler http.Handler = s.serveMux
@@ -110,7 +109,7 @@ func (s *connectRPCServer) Start(ctx context.Context) error {
 }
 
 // Stop allows to stop server.
-func (s *connectRPCServer) Stop(ctx context.Context) error {
+func (s *ConnectRPCServer) Stop(ctx context.Context) error {
 	if s.httpServer == nil {
 		return nil
 	}

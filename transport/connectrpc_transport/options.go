@@ -9,11 +9,11 @@ import (
 )
 
 // Option allows customizing gRPC server.
-type Option func(s *connectRPCServer)
+type Option func(s *ConnectRPCServer)
 
 // WithName allows set custom gRPC Name.
 func WithName(v string) Option {
-	return func(s *connectRPCServer) {
+	return func(s *ConnectRPCServer) {
 		if v == "" {
 			return
 		}
@@ -23,12 +23,12 @@ func WithName(v string) Option {
 
 // WithConfig allows set custom gRPC settings.
 func WithConfig(v Config) Option {
-	return func(s *connectRPCServer) { s.Config = v }
+	return func(s *ConnectRPCServer) { s.Config = v }
 }
 
 // WithLogger allows set custom gRPC Logger.
 func WithLogger(v logger.Logger) Option {
-	return func(s *connectRPCServer) {
+	return func(s *ConnectRPCServer) {
 		if v == nil {
 			return
 		}
@@ -38,7 +38,7 @@ func WithLogger(v logger.Logger) Option {
 
 // WithServer allows set custom gRPC Server.
 func WithServeMux(v *http.ServeMux) Option {
-	return func(s *connectRPCServer) {
+	return func(s *ConnectRPCServer) {
 		if v == nil {
 			return
 		}
@@ -48,7 +48,7 @@ func WithServeMux(v *http.ServeMux) Option {
 
 // WithHttpServer allows set custom http.Server.
 func WithHttpServer(v *http.Server) Option {
-	return func(s *connectRPCServer) {
+	return func(s *ConnectRPCServer) {
 		if s == nil {
 			return
 		}
@@ -58,14 +58,14 @@ func WithHttpServer(v *http.Server) Option {
 
 // WithServer allows to use reflection for grpc server.
 func WithReflection(services ...string) Option {
-	return func(s *connectRPCServer) {
+	return func(s *ConnectRPCServer) {
 		s.reflector = grpcreflect.NewStaticReflector(services...)
 	}
 }
 
 // WithServerHandlerWrapper allows set custom server handler wrapper.
 func WithServerHandlerWrapper(v func(h http.Handler) http.Handler) Option {
-	return func(s *connectRPCServer) {
+	return func(s *ConnectRPCServer) {
 		if v == nil {
 			return
 		}
@@ -75,12 +75,12 @@ func WithServerHandlerWrapper(v func(h http.Handler) http.Handler) Option {
 
 // WithServices allows adding new gRPC Service.
 func WithServices(services ...ConnectRPCService) Option {
-	return func(s *connectRPCServer) { s.services = append(s.services, services...) }
+	return func(s *ConnectRPCServer) { s.services = append(s.services, services...) }
 }
 
 // WithConnectRPCOptions allows adding new connect rpc options.
 func WithConnectRPCOptions(opts ...connect.HandlerOption) Option {
-	return func(s *connectRPCServer) {
+	return func(s *ConnectRPCServer) {
 		s.connectrpcOpts = append(s.connectrpcOpts, opts...)
 	}
 }

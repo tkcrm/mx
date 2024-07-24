@@ -44,33 +44,13 @@ func New[T any](
 		)
 	}
 
-	var conn *grpc.ClientConn
-	if config.ctx == nil {
-		c, err := grpc.Dial(config.Addr, config.grpsOpts...)
-		if err != nil {
-			return nilIface, fmt.Errorf(
-				"grpc dial with [%s] server by client [%s] error: %w",
-				config.Addr, config.Name, err,
-			)
-		}
-		conn = c
-	} else {
-		c, err := grpc.DialContext(config.ctx, config.Addr, config.grpsOpts...)
-		if err != nil {
-			return nilIface, fmt.Errorf(
-				"grpc dial with [%s] server by client [%s] error: %w",
-				config.Addr, config.Name, err,
-			)
-		}
-		conn = c
+	conn, err := grpc.NewClient(config.Addr, config.grpsOpts...)
+	if err != nil {
+		return nilIface, fmt.Errorf(
+			"grpc new client with [%s] server by client [%s] error: %w",
+			config.Addr, config.Name, err,
+		)
 	}
-
-	// if conn.GetState() != connectivity.Connecting {
-	// 	return nilIface, fmt.Errorf(
-	// 		"failed to ping [%s] grpc server by client [%s]",
-	// 		config.Addr, config.Name,
-	// 	)
-	// }
 
 	if logger != nil {
 		logger.Infof("register grpc client: %s", config.Name)

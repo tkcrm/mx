@@ -8,7 +8,11 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	_, err := grpc_client.New[any](grpc_client.Config{}, nil, func(cc grpc.ClientConnInterface) any {
+	_, err := grpc_client.New(grpc_client.Config{
+		Name:     "test",
+		Addr:     "localhost:9000",
+		Insecure: true,
+	}, nil, func(cc grpc.ClientConnInterface) any {
 		return "as"
 	})
 	if err != nil {
