@@ -66,17 +66,33 @@ func (s *HttpServer) Start(ctx context.Context) error {
 		handler = TracingMiddleware(s.handle)
 	}
 
+	if s.ReadTimeout == 0 {
+		s.ReadTimeout = 5
+	}
+
+	if s.WriteTimeout == 0 {
+		s.WriteTimeout = 10
+	}
+
+	if s.IdleTimeout == 0 {
+		s.IdleTimeout = 60
+	}
+
+	if s.ReadHeaderTimeout == 0 {
+		s.ReadHeaderTimeout = 10
+	}
+
 	s.server = &http.Server{
 		// to prevent default std logger output
 		Handler:  handler,
 		ErrorLog: log.Std(),
 
 		// G112: Potential Slowloris Attack because ReadHeaderTimeout is not configured in the http.Server
-		ReadHeaderTimeout: time.Second * 10,
+		ReadHeaderTimeout: time.Duration(s.ReadHeaderTimeout) * time.Second,
 
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 10 * time.Second,
-		IdleTimeout:  60 * time.Second,
+		ReadTimeout:  time.Duration(s.ReadTimeout) * time.Second,
+		WriteTimeout: time.Duration(s.WriteTimeout) * time.Second,
+		IdleTimeout:  time.Duration(s.IdleTimeout) * time.Second,
 	}
 
 	errChan := make(chan error, 1)

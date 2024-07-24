@@ -49,8 +49,9 @@ func New(log logger.ExtendedLogger, cfg Config) []service.IService {
 	}
 
 	type muxServer struct {
-		names []string
-		srv   *http.ServeMux
+		names    []string
+		httpOpts []http_transport.Option
+		srv      *http.ServeMux
 	}
 	muxServers := map[string]*muxServer{}
 
@@ -63,17 +64,26 @@ func New(log logger.ExtendedLogger, cfg Config) []service.IService {
 		}
 
 		muxServers[svc.getPort()].names = append(muxServers[svc.getPort()].names, svc.Name())
+		muxServers[svc.getPort()].httpOpts = append(muxServers[svc.getPort()].httpOpts, svc.getHttpOptions()...)
+
 		svc.initService(muxServers[svc.getPort()].srv)
 	}
 
 	// append http servers
 	for port, item := range muxServers {
-		s.services = append(s.services, http_transport.NewServer(
+		opts := []http_transport.Option{
 			s.config.getHttpOptionForPort(port),
 			http_transport.WithLogger(s.logger),
 			http_transport.WithHandler(item.srv),
 			http_transport.WithName(fmt.Sprintf("ops-server-%s", strings.Join(item.names, "-"))),
-		))
+			http_transport.WithWriteTimeout(60),
+		}
+
+		if len(item.httpOpts) > 0 {
+			opts = append(opts, item.httpOpts...)
+		}
+
+		s.services = append(s.services, http_transport.NewServer(opts...))
 	}
 
 	return s.services

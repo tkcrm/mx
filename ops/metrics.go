@@ -28,6 +28,11 @@ func (s metricsOpsService) getEnabled() bool { return s.config.Enabled }
 
 func (s metricsOpsService) getPort() string { return s.config.Port }
 
+func (s metricsOpsService) getHttpOptions() []http_transport.Option {
+	res := make([]http_transport.Option, 0)
+	return res
+}
+
 func (s metricsOpsService) initService(mux *http.ServeMux) {
 	mux.Handle(s.config.Path, http_transport.BasicAuthHandler(promhttp.Handler(), s.config.BasicAuth))
 }

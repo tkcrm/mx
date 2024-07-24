@@ -10,6 +10,7 @@ import (
 
 	"github.com/tkcrm/mx/logger"
 	"github.com/tkcrm/mx/service"
+	"github.com/tkcrm/mx/transport/http_transport"
 )
 
 type HealthCheckCode int
@@ -163,6 +164,11 @@ func (o *healthCheckerOpsService) Stop(ctx context.Context) error { return nil }
 func (s healthCheckerOpsService) getEnabled() bool { return s.config.Enabled }
 
 func (s healthCheckerOpsService) getPort() string { return s.config.Port }
+
+func (s healthCheckerOpsService) getHttpOptions() []http_transport.Option {
+	res := make([]http_transport.Option, 0)
+	return res
+}
 
 func (s *healthCheckerOpsService) initService(mux *http.ServeMux) {
 	mux.Handle(s.config.Path, s)

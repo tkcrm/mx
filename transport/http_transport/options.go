@@ -28,3 +28,23 @@ func WithLogger(v logger.ExtendedLogger) Option {
 func WithHandler(v http.Handler) Option {
 	return func(s *HttpServer) { s.handle = v }
 }
+
+// WithReadTimeout allows set custom read timeout value.
+func WithReadTimeout(v int) Option {
+	return func(s *HttpServer) { s.ReadTimeout = v }
+}
+
+// WithWriteTimeout allows set custom write timeout value.
+func WithWriteTimeout(v int) Option {
+	return func(s *HttpServer) { s.WriteTimeout = v }
+}
+
+// WithIdleTimeout allows set custom idle timeout value.
+func WithIdleTimeout(v int) Option {
+	return func(s *HttpServer) { s.IdleTimeout = v }
+}
+
+// WithReadHeaderTimeout allows set custom read header timeout value.
+func WithReadHeaderTimeout(v int) Option {
+	return func(s *HttpServer) { s.ReadHeaderTimeout = v }
+}
