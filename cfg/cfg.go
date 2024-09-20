@@ -152,9 +152,13 @@ func getAconfig(conf config) (aconfig.Config, error) {
 	aconf.FileDecoders = fileDecoders
 
 	for _, file := range aconf.Files {
-		fpath := path.Join(pwdDir, file)
-		if !files.ExistsPath(fpath) {
-			return aconfig.Config{}, fmt.Errorf("config file not found: %s", fpath)
+		absFilePath := file
+		if !path.IsAbs(file) {
+			absFilePath = path.Join(pwdDir, file)
+		}
+
+		if !files.ExistsPath(absFilePath) {
+			return aconfig.Config{}, fmt.Errorf("config file not found: %s", absFilePath)
 		}
 	}
 
