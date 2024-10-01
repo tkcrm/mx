@@ -54,20 +54,20 @@ func (c *config) generateMarkdown(l *aconfig.Loader, filePath string) error {
 		sizes[i] = utf8.RuneCountInString(cell) + 2
 	}
 
-	configFields := getConfigFields(l)
+	configFields := GetConfigFields(l)
 	for _, f := range configFields {
-		envName := f.envName
+		envName := f.EnvName
 		if c.options.loaderConfig.EnvPrefix != "" {
 			envName = c.options.loaderConfig.EnvPrefix + "_" + envName
 		}
 
 		cell := []string{
 			"`" + envName + "`",
-			boolIcon(f.isRequired),
-			boolIcon(f.isSecret),
-			codeBlock(f.defaultValue),
-			f.usage,
-			codeBlock(f.example),
+			boolIcon(f.IsRequired),
+			boolIcon(f.IsSecret),
+			codeBlock(f.DefaultValue),
+			f.Usage,
+			codeBlock(f.Example),
 		}
 		table = append(table, cell)
 

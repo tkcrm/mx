@@ -83,32 +83,32 @@ func (c *config) print(value string) {
 	_, _ = fmt.Fprintln(c.out, value)
 }
 
-func getConfigFields(loader *aconfig.Loader) []configField {
-	res := []configField{}
+func GetConfigFields(loader *aconfig.Loader) []ConfigField {
+	res := []ConfigField{}
 
 	loader.WalkFields(func(f aconfig.Field) bool {
-		newField := configField{
-			path:           f.Name(),
-			defaultValue:   f.Tag("default"),
-			usage:          f.Tag("usage"),
-			example:        f.Tag("example"),
-			validateParams: f.Tag("validate"),
+		newField := ConfigField{
+			Path:           f.Name(),
+			DefaultValue:   f.Tag("default"),
+			Usage:          f.Tag("usage"),
+			Example:        f.Tag("example"),
+			ValidateParams: f.Tag("validate"),
 		}
 
 		if slices.Contains(boolTrueValues, strings.ToLower(f.Tag("required"))) {
-			newField.isRequired = true
+			newField.IsRequired = true
 		}
 
 		if slices.Contains(boolTrueValues, strings.ToLower(f.Tag("secret"))) {
-			newField.isSecret = true
+			newField.IsSecret = true
 		}
 
 		if slices.Contains(boolTrueValues, strings.ToLower(f.Tag("disable_validation"))) {
-			newField.disableValidation = true
+			newField.DisableValidation = true
 		}
 
-		if strings.Contains(newField.validateParams, "required") {
-			newField.isRequired = true
+		if strings.Contains(newField.ValidateParams, "required") {
+			newField.IsRequired = true
 		}
 
 		envName := f.Tag("env")
@@ -122,16 +122,16 @@ func getConfigFields(loader *aconfig.Loader) []configField {
 
 			envName = fmt.Sprintf("%s_%s", field.Tag("env"), envName)
 
-			if !newField.disableValidation &&
+			if !newField.DisableValidation &&
 				slices.Contains(
 					boolTrueValues,
 					strings.ToLower(field.Tag("disable_validation")),
 				) {
-				newField.disableValidation = true
+				newField.DisableValidation = true
 			}
 		}
 
-		newField.envName = envName
+		newField.EnvName = envName
 
 		res = append(res, newField)
 

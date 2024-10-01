@@ -68,23 +68,23 @@ func (c *config) validateEnvs(cfg any, loader *aconfig.Loader) error {
 
 	// validate struct
 	errs := []string{}
-	configFields := getConfigFields(loader)
+	configFields := GetConfigFields(loader)
 	for _, f := range configFields {
-		if f.disableValidation || f.validateParams == "" {
+		if f.DisableValidation || f.ValidateParams == "" {
 			continue
 		}
 
-		fieldValue, err := structs.LookupString(cfg, f.path)
+		fieldValue, err := structs.LookupString(cfg, f.Path)
 		if err != nil {
 			return err
 		}
 
-		if err := validate.Var(fieldValue.Interface(), f.validateParams); err != nil {
+		if err := validate.Var(fieldValue.Interface(), f.ValidateParams); err != nil {
 			errs = append(errs,
 				strings.ReplaceAll(
 					err.Error(),
 					"Key: '' Error:Field validation for ''",
-					fmt.Sprintf("Validate %s env error:", f.envName),
+					fmt.Sprintf("Validate %s env error:", f.EnvName),
 				),
 			)
 		}
