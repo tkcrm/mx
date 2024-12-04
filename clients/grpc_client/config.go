@@ -8,8 +8,8 @@ import (
 
 // Config provides configuration for grpc cleint.
 type Config struct {
-	Name     string `default:"grpc-client" validate:"required" example:"backend-grpc-client"`
-	Addr     string `validate:"required" usage:"grpc server address" example:"localhost:9000"`
+	Name     string `validate:"required" default:"grpc-client" example:"backend-grpc-client"`
+	Addr     string `usage:"grpc server address" example:"localhost:9000"`
 	UseTls   bool   `yaml:"use_tls" default:"false" example:"false"`
 	Insecure bool   `default:"false" example:"false"`
 	ctx      context.Context

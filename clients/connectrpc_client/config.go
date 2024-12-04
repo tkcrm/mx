@@ -8,8 +8,8 @@ import (
 
 // Config provides configuration for grpc cleint.
 type Config struct {
-	Name           string `default:"connectrpc-client" validate:"required" example:"backend-connectrpc-client"`
-	Addr           string `validate:"required" usage:"connectrpc server address" example:"localhost:9000"`
+	Name           string `validate:"required" default:"connectrpc-client" example:"backend-connectrpc-client"`
+	Addr           string `usage:"connectrpc server address" example:"localhost:9000"`
 	ctx            context.Context
 	httpClient     connect.HTTPClient
 	connectrpcOpts []connect.ClientOption
