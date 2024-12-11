@@ -16,7 +16,7 @@ func newMetricsOpsService(cfg MetricsConfig) *metricsOpsService {
 }
 
 type MetricsConfig struct {
-	Enabled   bool                           `default:"true" usage:"allows to enable metrics" example:"true"`
+	Enabled   bool                           `default:"false" usage:"allows to enable metrics" example:"true"`
 	Path      string                         `default:"/metrics" validate:"required" usage:"allows to set custom metrics path" example:"/metrics"`
 	Port      string                         `default:"10000" validate:"required" usage:"allows to set custom metrics port" example:"10000"`
 	BasicAuth http_transport.BasicAuthConfig `yaml:"basic_auth"`

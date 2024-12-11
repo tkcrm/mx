@@ -36,7 +36,7 @@ type healthCheckerOpsService struct {
 }
 
 type HealthCheckerConfig struct {
-	Enabled      bool   `default:"true" usage:"allows to enable health checker" example:"true"`
+	Enabled      bool   `default:"false" usage:"allows to enable health checker" example:"true"`
 	Path         string `default:"/healthy" validate:"required" usage:"allows to set custom healthy path" example:"/healthy"`
 	Port         string `default:"10000" validate:"required" usage:"allows to set custom healthy port" example:"10000"`
 	servicesList []service.HealthChecker
