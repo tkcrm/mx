@@ -26,14 +26,15 @@ require (
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.61.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
-	go.opentelemetry.io/otel v1.32.0 // indirect
-	go.opentelemetry.io/otel/metric v1.32.0 // indirect
-	go.opentelemetry.io/otel/trace v1.32.0 // indirect
+	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
+	go.opentelemetry.io/otel v1.33.0 // indirect
+	go.opentelemetry.io/otel/metric v1.33.0 // indirect
+	go.opentelemetry.io/otel/trace v1.33.0 // indirect
 	golang.org/x/crypto v0.31.0 // indirect
-	golang.org/x/net v0.32.0 // indirect
+	golang.org/x/net v0.33.0 // indirect
 	golang.org/x/sys v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
-	google.golang.org/protobuf v1.35.2 // indirect
+	google.golang.org/protobuf v1.36.0 // indirect
 )
 
 require (
@@ -41,6 +42,6 @@ require (
 	github.com/cristalhq/aconfig/aconfigdotenv v0.17.1
 	github.com/cristalhq/aconfig/aconfigyaml v0.17.1
 	github.com/prometheus/client_golang v1.20.5
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.57.0
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.58.0
 	go.uber.org/multierr v1.11.0 // indirect
 )
