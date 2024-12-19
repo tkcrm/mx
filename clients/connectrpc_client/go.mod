@@ -6,6 +6,6 @@ require github.com/google/go-cmp v0.6.0 // indirect
 
 require (
 	connectrpc.com/connect v1.17.0
-	golang.org/x/net v0.27.0 // indirect
-	google.golang.org/protobuf v1.35.2 // indirect
+	golang.org/x/net v0.33.0 // indirect
+	google.golang.org/protobuf v1.36.0 // indirect
 )
