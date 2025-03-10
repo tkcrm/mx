@@ -149,7 +149,9 @@ func getAconfig(conf config) (aconfig.Config, error) {
 	}
 
 	aconf := conf.options.loaderConfig
-	aconf.FileDecoders = fileDecoders
+	if aconf.FileDecoders == nil {
+		aconf.FileDecoders = fileDecoders
+	}
 
 	for _, file := range aconf.Files {
 		absFilePath := file
