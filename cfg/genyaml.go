@@ -7,7 +7,7 @@ import (
 	"reflect"
 
 	"github.com/cristalhq/aconfig"
-	"gopkg.in/yaml.v3"
+	"github.com/goccy/go-yaml"
 )
 
 func GenerateYamlTemplate(cfg any, filePath string, opts ...Option) error {
@@ -36,10 +36,8 @@ func GenerateYamlTemplate(cfg any, filePath string, opts ...Option) error {
 	}
 
 	buf := bytes.NewBuffer(nil)
-	enc := yaml.NewEncoder(buf)
+	enc := yaml.NewEncoder(buf, yaml.Indent(2))
 	defer enc.Close()
-
-	enc.SetIndent(2)
 
 	if err := enc.Encode(cfg); err != nil {
 		return fmt.Errorf("failed to encode yaml: %w", err)
