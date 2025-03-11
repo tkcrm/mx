@@ -1,0 +1,83 @@
+linters-settings:
+  tagliatelle:
+    case:
+      use-field-name: true
+      rules:
+        json: snake
+        yaml: snake
+  gocognit:
+    min-complexity: 80
+  funlen:
+    lines: 190
+    statements: -1
+    ignore-comments: true
+  interfacebloat:
+    max: 20
+  gocyclo:
+    min-complexity: 45
+  cyclop:
+    max-complexity: 25
+  lll:
+    line-length: 170
+    tab-width: 2
+
+linters:
+  enable-all: true
+
+  disable:
+    - tenv
+    - wsl
+    - wrapcheck
+    - varnamelen
+    - tagalign
+    - recvcheck
+    - mnd
+    - nlreturn
+    - exhaustruct
+    - exhaustive
+    - gochecknoglobals
+    - err113
+    - depguard
+    - godox
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - funlen
+        - misspell
+  exclude-files:
+    - ".*\\.sql\\.go"
+    - ".*\\.pb\\.go"
+    - ".*\\.connect\\.go"
+  exclude-dirs:
+    - bin
+    - api
+    - schema
+    - sql
+    - internal/templates
+    - pb
+    - schema
+  exclude:
+    - "missing type in composite literal"
+    - "var-naming: don't use an underscore in package name"
+    - "should not use underscores in package names"
+run:
+  modules-download-mode: readonly
+  allow-parallel-runners: true
+  timeout: 2m
+  tests: false
+
+severity:
+  default-severity: error
+  rules:
+    - severity: warning
+      linters:
+        - godox
+    - severity: info
+      linters:
+        - dupl
+
+output:
+  show-stats: true
+  sort-results: true

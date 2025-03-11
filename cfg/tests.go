@@ -1,7 +1,7 @@
 package cfg
 
 import (
-	"fmt"
+	"errors"
 	"os"
 	"reflect"
 
@@ -24,7 +24,7 @@ import (
 //	}
 func LoadForTests(cfg any, opts ...Option) error {
 	if reflect.ValueOf(cfg).Kind() != reflect.Ptr {
-		return fmt.Errorf("config must be a pointer")
+		return errors.New("config must be a pointer")
 	}
 
 	options := newOptions(opts...)

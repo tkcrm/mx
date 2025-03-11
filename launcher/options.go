@@ -27,7 +27,7 @@ type Options struct {
 
 	Signal bool
 
-	Context context.Context
+	Context context.Context //nolint:containedctx
 
 	OpsConfig ops.Config
 }
@@ -55,12 +55,12 @@ func newOptions(opts ...Option) Options {
 	return opt
 }
 
-// Name of the launcher
+// Name of the launcher.
 func WithName(n string) Option {
 	return func(o *Options) { o.Name = n }
 }
 
-// Version of the launcher
+// Version of the launcher.
 func WithVersion(v string) Option {
 	return func(o *Options) { o.Version = v }
 }
@@ -91,28 +91,28 @@ func WithAppStartStopLog(v bool) Option {
 
 // Before and Afters
 
-// WithBeforeStart run funcs before service starts
+// WithBeforeStart run funcs before service starts.
 func WithBeforeStart(fn func() error) Option {
 	return func(o *Options) {
 		o.BeforeStart = append(o.BeforeStart, fn)
 	}
 }
 
-// WithBeforeStop run funcs before service stops
+// WithBeforeStop run funcs before service stops.
 func WithBeforeStop(fn func() error) Option {
 	return func(o *Options) {
 		o.BeforeStop = append(o.BeforeStop, fn)
 	}
 }
 
-// WithAfterStart run funcs after service starts
+// WithAfterStart run funcs after service starts.
 func WithAfterStart(fn func() error) Option {
 	return func(o *Options) {
 		o.AfterStart = append(o.AfterStart, fn)
 	}
 }
 
-// WithAfterStop run funcs after service stops
+// WithAfterStop run funcs after service stops.
 func WithAfterStop(fn func() error) Option {
 	return func(o *Options) {
 		o.AfterStop = append(o.AfterStop, fn)

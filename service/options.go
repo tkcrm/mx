@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"time"
 
 	"github.com/tkcrm/mx/logger"
@@ -12,7 +12,7 @@ const (
 	defaultServiceName = "unknown"
 )
 
-// Options for service
+// Options for service.
 type Options struct {
 	Logger logger.Logger
 
@@ -32,7 +32,7 @@ type Options struct {
 
 	Signal bool
 
-	Context context.Context
+	Context context.Context //nolint:containedctx
 
 	// Default 10 seconds
 	ShutdownTimeout time.Duration
@@ -40,23 +40,23 @@ type Options struct {
 
 func (s *Options) Validate() error {
 	if s.Logger == nil {
-		return fmt.Errorf("undefined logger")
+		return errors.New("undefined logger")
 	}
 
 	if s.Name == "" {
-		return fmt.Errorf("empty name")
+		return errors.New("empty name")
 	}
 
 	if s.StartFn == nil {
-		return fmt.Errorf("undefined Start func")
+		return errors.New("undefined Start func")
 	}
 
 	if s.StopFn == nil {
-		return fmt.Errorf("undefined Stop func")
+		return errors.New("undefined Stop func")
 	}
 
 	if s.Context == nil {
-		return fmt.Errorf("undefined context")
+		return errors.New("undefined context")
 	}
 
 	return nil
@@ -96,7 +96,7 @@ func WithSignal(b bool) Option {
 	return func(o *Options) { o.Signal = b }
 }
 
-// Name of the service
+// Name of the service.
 func WithName(n string) Option {
 	return func(o *Options) { o.Name = n }
 }
@@ -131,11 +131,11 @@ func WithService(svc any) Option {
 			o.Name = impl.Name()
 		}
 
-		if impl, ok := svc.(interface{ Start(context.Context) error }); ok {
+		if impl, ok := svc.(interface{ Start(_ context.Context) error }); ok {
 			o.StartFn = impl.Start
 		}
 
-		if impl, ok := svc.(interface{ Stop(context.Context) error }); ok {
+		if impl, ok := svc.(interface{ Stop(_ context.Context) error }); ok {
 			o.StopFn = impl.Stop
 		}
 
@@ -151,35 +151,35 @@ func WithService(svc any) Option {
 
 // Before and Afters
 
-// WithBeforeStart run funcs before service starts
+// WithBeforeStart run funcs before service starts.
 func WithBeforeStart(fn func() error) Option {
 	return func(o *Options) {
 		o.BeforeStart = append(o.BeforeStart, fn)
 	}
 }
 
-// WithBeforeStop run funcs before service stops
+// WithBeforeStop run funcs before service stops.
 func WithBeforeStop(fn func() error) Option {
 	return func(o *Options) {
 		o.BeforeStop = append(o.BeforeStop, fn)
 	}
 }
 
-// WithAfterStart run funcs after service starts
+// WithAfterStart run funcs after service starts.
 func WithAfterStart(fn func() error) Option {
 	return func(o *Options) {
 		o.AfterStart = append(o.AfterStart, fn)
 	}
 }
 
-// WithAfterStartFinished run funcs after was finished service start func
+// WithAfterStartFinished run funcs after was finished service start func.
 func WithAfterStartFinished(fn func() error) Option {
 	return func(o *Options) {
-		o.AfterStartFinished = append(o.AfterStart, fn)
+		o.AfterStartFinished = append(o.AfterStartFinished, fn)
 	}
 }
 
-// WithAfterStop run funcs after service stops
+// WithAfterStop run funcs after service stops.
 func WithAfterStop(fn func() error) Option {
 	return func(o *Options) {
 		o.AfterStop = append(o.AfterStop, fn)

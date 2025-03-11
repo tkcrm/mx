@@ -16,7 +16,7 @@ import (
 // ValidateConfig validates config struct with environment variables and custom validation functions.
 func ValidateConfig(cfg any, opts ...Option) error {
 	if reflect.ValueOf(cfg).Kind() != reflect.Ptr {
-		return fmt.Errorf("config must be a pointer")
+		return errors.New("config must be a pointer")
 	}
 
 	options := newOptions(opts...)
@@ -54,7 +54,7 @@ func (c *config) validateEnvs(cfg any, loader *aconfig.Loader) error {
 	}
 
 	val := reflect.ValueOf(cfg).Elem()
-	for i := 0; i < val.NumField(); i++ {
+	for i := range val.NumField() {
 		if err := validateElem(c.options.ctx, val.Field(i).Addr().Interface()); err != nil {
 			return err
 		}
@@ -63,7 +63,9 @@ func (c *config) validateEnvs(cfg any, loader *aconfig.Loader) error {
 	// init validator
 	validate := validator.New()
 	for _, item := range c.options.validateFuncs {
-		validate.RegisterValidation(item.Tag, item.Fn, item.CallValidationEvenIfNull...)
+		if err := validate.RegisterValidation(item.Tag, item.Fn, item.CallValidationEvenIfNull...); err != nil {
+			return err
+		}
 	}
 
 	// validate struct

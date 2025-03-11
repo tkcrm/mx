@@ -2,6 +2,7 @@ package cfg
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"reflect"
@@ -12,7 +13,7 @@ import (
 
 func GenerateYamlTemplate(cfg any, filePath string, opts ...Option) error {
 	if reflect.ValueOf(cfg).Kind() != reflect.Ptr {
-		return fmt.Errorf("config must be a pointer")
+		return errors.New("config must be a pointer")
 	}
 
 	options := newOptions(opts...)
@@ -43,7 +44,7 @@ func GenerateYamlTemplate(cfg any, filePath string, opts ...Option) error {
 		return fmt.Errorf("failed to encode yaml: %w", err)
 	}
 
-	if err := os.WriteFile(filePath, buf.Bytes(), os.ModePerm); err != nil {
+	if err := os.WriteFile(filePath, buf.Bytes(), 0o600); err != nil {
 		return fmt.Errorf("failed to write file: %w", err)
 	}
 

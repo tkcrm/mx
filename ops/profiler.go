@@ -36,7 +36,7 @@ func (s profilerOpsService) initService(mux *http.ServeMux) {
 	mux.HandleFunc(s.config.Path+"/trace", pprof.Trace)
 }
 
-func (s profilerOpsService) getHttpOptions() []http_transport.Option {
+func (s profilerOpsService) getHTTPOptions() []http_transport.Option {
 	res := make([]http_transport.Option, 0)
 
 	if s.config.WriteTimeout > 0 {

@@ -25,7 +25,7 @@ type IServicesRunner interface {
 type servicesRunner struct {
 	logger   logger.Logger
 	services []*service.Service
-	ctx      context.Context
+	ctx      context.Context //nolint:containedctx
 }
 
 func newServicesRunner(ctx context.Context, logger logger.Logger) *servicesRunner {
@@ -77,7 +77,7 @@ func (s *servicesRunner) Services() []*service.Service {
 	return s.services
 }
 
-// hcServices return services that implements HealthChecker interface
+// hcServices return services that implements HealthChecker interface.
 func (s *servicesRunner) hcServices() []service.HealthChecker {
 	services := []service.HealthChecker{}
 	for _, svc := range s.services {

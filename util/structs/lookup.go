@@ -22,8 +22,7 @@ var (
 	ErrIndexOutOfBounds  = errors.New("index out of bounds")
 )
 
-// LookupString performs a lookup into a value, using a string. Same as `Lookup`
-// but using a string with the keys separated by `.`
+// but using a string with the keys separated by `.`.
 func LookupString(i interface{}, path string) (reflect.Value, error) {
 	return Lookup(i, strings.Split(path, SplitToken)...)
 }
@@ -75,8 +74,8 @@ func lookup(i interface{}, caseInsensitive bool, path ...string) (reflect.Value,
 
 func getValueByName(v reflect.Value, key string, caseInsensitive bool) (reflect.Value, error) {
 	var value reflect.Value
-	var index int = -1
 	var err error
+	var index int
 
 	prevKey := key
 	key, index, err = parseIndex(key)
@@ -93,7 +92,7 @@ func getValueByName(v reflect.Value, key string, caseInsensitive bool) (reflect.
 			// We don't use FieldByNameFunc, since it returns zero value if the
 			// match func matches multiple fields. Iterate here and return the
 			// first matching field.
-			for i := 0; i < v.NumField(); i++ {
+			for i := range v.NumField() {
 				if strings.EqualFold(v.Type().Field(i).Name, key) {
 					value = v.Field(i)
 					break
@@ -157,7 +156,7 @@ func aggreateAggregableValue(v reflect.Value, path []string) (reflect.Value, err
 	}
 
 	index := indexFunction(v)
-	for i := 0; i < l; i++ {
+	for i := range l {
 		value, err := Lookup(index(i).Interface(), path...)
 		if err != nil {
 			return reflect.Value{}, err
@@ -198,7 +197,7 @@ func mergeValue(values []reflect.Value) reflect.Value {
 	}
 
 	value := reflect.MakeSlice(reflect.SliceOf(t), 0, 0)
-	for i := 0; i < l; i++ {
+	for i := range l {
 		if !values[i].IsValid() {
 			continue
 		}
@@ -217,7 +216,7 @@ func removeZeroValues(values []reflect.Value) []reflect.Value {
 	l := len(values)
 
 	var v []reflect.Value
-	for i := 0; i < l; i++ {
+	for i := range l {
 		if values[i].IsValid() {
 			v = append(v, values[i])
 		}

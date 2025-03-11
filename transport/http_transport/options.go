@@ -7,44 +7,44 @@ import (
 )
 
 // Option allows customizing http component settings.
-type Option func(*HttpServer)
+type Option func(*HTTPServer)
 
 // WithConfig allows set custom http settings.
 func WithConfig(v Config) Option {
-	return func(s *HttpServer) { s.Config = v }
+	return func(s *HTTPServer) { s.Config = v }
 }
 
 // WithName allows set custom http name value.
 func WithName(v string) Option {
-	return func(s *HttpServer) { s.name = v }
+	return func(s *HTTPServer) { s.name = v }
 }
 
 // WithLogger allows set custom logger value.
 func WithLogger(v logger.ExtendedLogger) Option {
-	return func(s *HttpServer) { s.logger = v }
+	return func(s *HTTPServer) { s.logger = v }
 }
 
 // WithHandler allows set custom http.Handler value.
 func WithHandler(v http.Handler) Option {
-	return func(s *HttpServer) { s.handle = v }
+	return func(s *HTTPServer) { s.handle = v }
 }
 
 // WithReadTimeout allows set custom read timeout value.
 func WithReadTimeout(v int) Option {
-	return func(s *HttpServer) { s.ReadTimeout = v }
+	return func(s *HTTPServer) { s.ReadTimeout = v }
 }
 
 // WithWriteTimeout allows set custom write timeout value.
 func WithWriteTimeout(v int) Option {
-	return func(s *HttpServer) { s.WriteTimeout = v }
+	return func(s *HTTPServer) { s.WriteTimeout = v }
 }
 
 // WithIdleTimeout allows set custom idle timeout value.
 func WithIdleTimeout(v int) Option {
-	return func(s *HttpServer) { s.IdleTimeout = v }
+	return func(s *HTTPServer) { s.IdleTimeout = v }
 }
 
 // WithReadHeaderTimeout allows set custom read header timeout value.
 func WithReadHeaderTimeout(v int) Option {
-	return func(s *HttpServer) { s.ReadHeaderTimeout = v }
+	return func(s *HTTPServer) { s.ReadHeaderTimeout = v }
 }

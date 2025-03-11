@@ -3,7 +3,7 @@ package http_transport
 import (
 	"crypto/sha256"
 	"crypto/subtle"
-	"fmt"
+	"errors"
 	"net/http"
 )
 
@@ -31,11 +31,11 @@ func checkBasicAuth(r *http.Request, cfg BasicAuthConfig) error {
 
 	username, password, ok := r.BasicAuth()
 	if !ok {
-		return fmt.Errorf("expected basic auth")
+		return errors.New("expected basic auth")
 	}
 
 	if username == "" || password == "" {
-		return fmt.Errorf("empty username or password")
+		return errors.New("empty username or password")
 	}
 
 	userEncoded := sha256.Sum256([]byte(username))
@@ -51,5 +51,5 @@ func checkBasicAuth(r *http.Request, cfg BasicAuthConfig) error {
 		return nil
 	}
 
-	return fmt.Errorf("credentials mismatch")
+	return errors.New("credentials mismatch")
 }

@@ -1,3 +1,4 @@
+//nolint:ireturn
 package logger
 
 import (
@@ -20,23 +21,23 @@ type logger struct {
 	*sugaredLogger
 }
 
-// Sugar returns zap.SugaredLogger
+// Sugar returns zap.SugaredLogger.
 func (l *logger) Sugar() *sugaredLogger { return l.sugaredLogger }
 
-// Std returns standard library log.Logger
+// Std returns standard library log.Logger.
 func (l *logger) Std() *log.Logger { return zap.NewStdLog(l.Desugar()) }
 
-// Logger returns logger instance
+// Logger returns logger instance.
 func (l *logger) LoggerInstance() *logger {
 	return l
 }
 
-// Default returns default logger instance
+// Default returns default logger instance.
 func Default() Logger {
 	return DefaultExtended()
 }
 
-// Default returns default extended logger instance
+// Default returns default extended logger instance.
 func DefaultExtended() ExtendedLogger {
 	atom := zap.NewAtomicLevel()
 	atom.SetLevel(zapcore.DebugLevel)
@@ -58,12 +59,12 @@ func DefaultExtended() ExtendedLogger {
 	return &logger{sugaredLogger: l.Sugar()}
 }
 
-// New - init new logger with options
+// New - init new logger with options.
 func New(opts ...Option) Logger {
 	return initLogger(opts...)
 }
 
-// NewExtended - init new extended logger with options
+// NewExtended - init new extended logger with options.
 func NewExtended(opts ...Option) ExtendedLogger {
 	return initLogger(opts...)
 }
@@ -114,14 +115,13 @@ func initLogger(opts ...Option) *logger {
 		o(&l)
 	}
 
-	logLevel := safeLevel(LogLevel(l.config.Level))
-	logTrace := safeLevel(LogLevel(l.config.Trace))
+	logLevel := safeLevel(l.config.Level)
+	logTrace := safeLevel(l.config.Trace)
 
 	l.zapConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 
 	encoder := zapcore.NewJSONEncoder(l.zapConfig)
-	switch l.config.Format {
-	case LoggerFormatConsole:
+	if l.config.Format == LoggerFormatConsole {
 		if l.config.ConsoleColored {
 			l.zapConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 		}

@@ -21,7 +21,7 @@ type Config = aconfig.Config
 type options struct {
 	loaderConfig  aconfig.Config
 	validate      bool
-	ctx           context.Context
+	ctx           context.Context //nolint:containedctx
 	validateFuncs []ValidateFn
 }
 
@@ -39,7 +39,7 @@ func newOptions(opts ...Option) *options {
 	return opt
 }
 
-// WithEnvFile - path to dotenv config file
+// WithEnvFile - path to dotenv config file.
 func WithLoaderConfig(v Config) Option {
 	return func(o *options) {
 		o.loaderConfig = v

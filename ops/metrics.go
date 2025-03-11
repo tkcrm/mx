@@ -28,7 +28,7 @@ func (s metricsOpsService) getEnabled() bool { return s.config.Enabled }
 
 func (s metricsOpsService) getPort() string { return s.config.Port }
 
-func (s metricsOpsService) getHttpOptions() []http_transport.Option {
+func (s metricsOpsService) getHTTPOptions() []http_transport.Option {
 	res := make([]http_transport.Option, 0)
 	return res
 }
