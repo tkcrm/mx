@@ -1,17 +1,17 @@
 package cfg
 
 import (
-	"fmt"
+	"errors"
 	"os"
 	"reflect"
 
 	"github.com/cristalhq/aconfig"
 )
 
-// GetConfigLoader returns aconfig loader instance
+// GetConfigLoader returns aconfig loader instance.
 func GetConfigLoader(cfg any, opts ...Option) (*aconfig.Loader, error) {
 	if reflect.ValueOf(cfg).Kind() != reflect.Ptr {
-		return nil, fmt.Errorf("config must be a pointer")
+		return nil, errors.New("config must be a pointer")
 	}
 
 	options := newOptions(opts...)

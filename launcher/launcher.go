@@ -1,3 +1,4 @@
+//nolint:ireturn
 package launcher
 
 import (
@@ -42,14 +43,14 @@ type launcher struct {
 	servicesRunner *servicesRunner
 }
 
-// New creates a new launcher
+// New creates a new launcher.
 func New(opts ...Option) ILauncher {
 	l := &launcher{
 		opts: newOptions(opts...),
 	}
 
 	ctx, cancel := context.WithCancel(l.opts.Context)
-	l.opts.Context = ctx
+	l.opts.Context = ctx //nolint:fatcontext
 	l.cancelFn = cancel
 
 	l.servicesRunner = newServicesRunner(l.opts.Context, l.opts.logger)
@@ -57,8 +58,8 @@ func New(opts ...Option) ILauncher {
 	return l
 }
 
-// Run runs launcher and all services
-func (l *launcher) Run() error {
+// Run runs launcher and all services.
+func (l *launcher) Run() error { //nolint:cyclop
 	// register ops services
 	if l.opts.OpsConfig.Enabled {
 		if l.opts.OpsConfig.Healthy.Enabled {
@@ -147,7 +148,9 @@ func (l *launcher) Run() error {
 			}
 
 			// wait stop group
-			g.Wait()
+			if err := g.Wait(); err != nil {
+				l.opts.logger.Errorf("failed to stop services: %s", err)
+			}
 		}
 	case RunnerServicesSequenceFifo:
 		{
@@ -184,16 +187,16 @@ func (l *launcher) Run() error {
 	return stopErr
 }
 
-// Stop stops launcher and all services
+// Stop stops launcher and all services.
 func (l *launcher) Stop() { l.cancelFn() }
 
-// ServicesRunner returns services runner
+// ServicesRunner returns services runner.
 func (l *launcher) ServicesRunner() IServicesRunner { return l.servicesRunner }
 
-// Context returns global context
+// Context returns global context.
 func (l *launcher) Context() context.Context { return l.opts.Context }
 
-// AddBeforeStartHooks adds before start hooks
+// AddBeforeStartHooks adds before start hooks.
 func (l *launcher) AddBeforeStartHooks(hook ...func() error) {
 	for _, fn := range hook {
 		if fn == nil {
@@ -203,7 +206,7 @@ func (l *launcher) AddBeforeStartHooks(hook ...func() error) {
 	}
 }
 
-// AddBeforeStopHooks adds before stop hooks
+// AddBeforeStopHooks adds before stop hooks.
 func (l *launcher) AddBeforeStopHooks(hook ...func() error) {
 	for _, fn := range hook {
 		if fn == nil {
@@ -213,7 +216,7 @@ func (l *launcher) AddBeforeStopHooks(hook ...func() error) {
 	}
 }
 
-// AddAfterStartHooks adds after start hooks
+// AddAfterStartHooks adds after start hooks.
 func (l *launcher) AddAfterStartHooks(hook ...func() error) {
 	for _, fn := range hook {
 		if fn == nil {
@@ -223,7 +226,7 @@ func (l *launcher) AddAfterStartHooks(hook ...func() error) {
 	}
 }
 
-// AddAfterStopHooks adds after stop hooks
+// AddAfterStopHooks adds after stop hooks.
 func (l *launcher) AddAfterStopHooks(hook ...func() error) {
 	for _, fn := range hook {
 		if fn == nil {

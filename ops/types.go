@@ -10,6 +10,6 @@ type opsService interface {
 	Name() string
 	getEnabled() bool
 	getPort() string
-	getHttpOptions() []http_transport.Option
+	getHTTPOptions() []http_transport.Option
 	initService(mux *http.ServeMux)
 }

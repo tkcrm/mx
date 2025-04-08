@@ -1,6 +1,7 @@
 package cfg
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"reflect"
@@ -14,7 +15,7 @@ const cellSeparator = "|"
 
 func GenerateMarkdown(cfg any, filePath string, opts ...Option) error {
 	if reflect.ValueOf(cfg).Kind() != reflect.Ptr {
-		return fmt.Errorf("config must be a pointer")
+		return errors.New("config must be a pointer")
 	}
 
 	options := newOptions(opts...)
@@ -41,11 +42,11 @@ func GenerateMarkdown(cfg any, filePath string, opts ...Option) error {
 }
 
 func (c *config) generateMarkdown(l *aconfig.Loader, filePath string) error {
-	var table [][]string
-
-	table = append(table, []string{
-		"Name", "Required", "Secret", "Default value", "Usage", "Example",
-	})
+	table := [][]string{
+		{
+			"Name", "Required", "Secret", "Default value", "Usage", "Example",
+		},
+	}
 
 	sizes := make([]int, len(table[0]))
 
@@ -121,7 +122,7 @@ func (c *config) generateMarkdown(l *aconfig.Loader, filePath string) error {
 	_, _ = fmt.Fprintln(c.out, out.String())
 
 	if filePath != "" {
-		if err := os.WriteFile(filePath, []byte(out.String()), os.ModePerm); err != nil {
+		if err := os.WriteFile(filePath, []byte(out.String()), 0o600); err != nil {
 			return err
 		}
 	}

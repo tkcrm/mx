@@ -2,7 +2,7 @@ package cfg
 
 import (
 	"bytes"
-	"fmt"
+	"errors"
 	"os"
 	"reflect"
 
@@ -11,7 +11,7 @@ import (
 
 func GenerateFlags(cfg any, opts ...Option) (string, error) {
 	if reflect.ValueOf(cfg).Kind() != reflect.Ptr {
-		return "", fmt.Errorf("config must be a pointer")
+		return "", errors.New("config must be a pointer")
 	}
 
 	options := newOptions(opts...)

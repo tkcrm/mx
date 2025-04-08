@@ -22,7 +22,7 @@ type Config struct {
 	Profiler ProfilerConfig
 }
 
-func (c *Config) getHttpOptionForPort(port string) http_transport.Option {
+func (c *Config) getHTTPOptionForPort(port string) http_transport.Option {
 	return http_transport.WithConfig(http_transport.Config{
 		Enabled: c.Enabled,
 		Address: ":" + port,

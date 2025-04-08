@@ -1,6 +1,7 @@
 package cfg
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -11,7 +12,7 @@ import (
 
 	"github.com/cristalhq/aconfig"
 	"github.com/cristalhq/aconfig/aconfigdotenv"
-	"github.com/cristalhq/aconfig/aconfigyaml"
+	"github.com/tkcrm/mx/cfg/yamlloader"
 	"github.com/tkcrm/mx/util/files"
 )
 
@@ -19,8 +20,8 @@ var (
 	boolTrueValues = []string{"true", "1"}
 	fileDecoders   = map[string]aconfig.FileDecoder{
 		".env":  aconfigdotenv.New(),
-		".yaml": aconfigyaml.New(),
-		".yml":  aconfigyaml.New(),
+		".yaml": yamlloader.New(),
+		".yml":  yamlloader.New(),
 	}
 )
 
@@ -47,7 +48,7 @@ type config struct {
 //	}
 func Load(cfg any, opts ...Option) error {
 	if reflect.ValueOf(cfg).Kind() != reflect.Ptr {
-		return fmt.Errorf("config must be a pointer")
+		return errors.New("config must be a pointer")
 	}
 
 	options := newOptions(opts...)
@@ -141,7 +142,7 @@ func GetConfigFields(loader *aconfig.Loader) []ConfigField {
 	return res
 }
 
-// getAconfig return aconfig.Config based on options
+// getAconfig return aconfig.Config based on options.
 func getAconfig(conf config) (aconfig.Config, error) {
 	pwdDir, err := os.Getwd()
 	if err != nil {
@@ -149,7 +150,9 @@ func getAconfig(conf config) (aconfig.Config, error) {
 	}
 
 	aconf := conf.options.loaderConfig
-	aconf.FileDecoders = fileDecoders
+	if aconf.FileDecoders == nil {
+		aconf.FileDecoders = fileDecoders
+	}
 
 	for _, file := range aconf.Files {
 		absFilePath := file

@@ -8,7 +8,7 @@ type testingT interface {
 }
 
 // ForTests wrapped logger for tests.
-func ForTests(t testingT) Logger {
+func ForTests(t testingT) Logger { //nolint:ireturn
 	t.Helper()
 	return &logger{sugaredLogger: zaptest.NewLogger(t).Sugar()}
 }

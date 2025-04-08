@@ -25,8 +25,7 @@ type PingPong struct {
 	done chan struct{}
 }
 
-// New return ping pong instance with default timeout 5 min
-// and message ping-pong
+// New return ping pong instance with default timeout 5 min and message ping-pong.
 func New(logger logger, opts ...Option) *PingPong {
 	pp := &PingPong{log: logger, done: make(chan struct{})}
 	for _, o := range opts {
@@ -44,10 +43,10 @@ func New(logger logger, opts ...Option) *PingPong {
 	return pp
 }
 
-// Name of the service
+// Name of the service.
 func (p *PingPong) Name() string { return "ping-pong" }
 
-// Start ping-pong service
+// Start ping-pong service.
 func (p *PingPong) Start(ctx context.Context) error {
 	timer := time.NewTimer(p.timeout)
 	defer timer.Stop()
@@ -65,7 +64,7 @@ func (p *PingPong) Start(ctx context.Context) error {
 	}
 }
 
-// Stop ping-pong service
+// Stop ping-pong service.
 func (p *PingPong) Stop(_ context.Context) error {
 	p.once.Do(func() {
 		close(p.done)

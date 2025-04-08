@@ -6,7 +6,6 @@
 package ops
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -21,7 +20,7 @@ type ops struct {
 	services []service.IService
 }
 
-// New return list with ops services
+// New return list with ops services.
 func New(log logger.ExtendedLogger, cfg Config) []service.IService {
 	s := &ops{
 		logger: log,
@@ -64,7 +63,7 @@ func New(log logger.ExtendedLogger, cfg Config) []service.IService {
 		}
 
 		muxServers[svc.getPort()].names = append(muxServers[svc.getPort()].names, svc.Name())
-		muxServers[svc.getPort()].httpOpts = append(muxServers[svc.getPort()].httpOpts, svc.getHttpOptions()...)
+		muxServers[svc.getPort()].httpOpts = append(muxServers[svc.getPort()].httpOpts, svc.getHTTPOptions()...)
 
 		svc.initService(muxServers[svc.getPort()].srv)
 	}
@@ -72,10 +71,10 @@ func New(log logger.ExtendedLogger, cfg Config) []service.IService {
 	// append http servers
 	for port, item := range muxServers {
 		opts := []http_transport.Option{
-			s.config.getHttpOptionForPort(port),
+			s.config.getHTTPOptionForPort(port),
 			http_transport.WithLogger(s.logger),
 			http_transport.WithHandler(item.srv),
-			http_transport.WithName(fmt.Sprintf("ops-server-%s", strings.Join(item.names, "-"))),
+			http_transport.WithName("ops-server-" + strings.Join(item.names, "-")),
 			http_transport.WithWriteTimeout(60),
 		}
 
