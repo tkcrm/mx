@@ -9,7 +9,7 @@ type Option func(*Config)
 
 type Config struct {
 	Enabled          bool    `default:"false"`
-	DSN              string  `env:"DSN" yaml:"dsn" usage:"The DSN to use. If the DSN is not set, the client is effectively disabled."`
+	DSN              string  `yaml:"dsn" usage:"The DSN to use. If the DSN is not set, the client is effectively disabled."`
 	Environment      string  `usage:"The environment to be sent with events."`
 	TracesSampleRate float64 `yaml:"traces_sample_rate" default:"1"`
 	AttachStacktrace bool    `yaml:"attach_stacktrace" default:"true"`

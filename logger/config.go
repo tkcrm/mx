@@ -5,12 +5,12 @@ import (
 )
 
 type Config struct {
-	Format         LogFormat `yaml:"format" env:"FORMAT" default:"json" usage:"allows to set custom formatting" example:"json"`
-	Level          LogLevel  `yaml:"level" env:"LEVEL" default:"info" usage:"allows to set custom logger level" example:"info"`
-	ConsoleColored bool      `yaml:"console_colored" env:"CONSOLE_COLORED" default:"false" usage:"allows to set colored console output" example:"false"`
-	Trace          LogLevel  `yaml:"trace" env:"TRACE" default:"fatal" usage:"allows to set custom trace level" example:"fatal"`
-	WithCaller     bool      `yaml:"with_caller" env:"WITH_CALLER" default:"false" usage:"allows to show caller" example:"false"`
-	WithStackTrace bool      `yaml:"with_stack_trace" env:"WITH_STACK_TRACE" default:"false" usage:"allows to show stack trace" example:"false"`
+	Format         LogFormat `yaml:"format" default:"json" usage:"allows to set custom formatting" example:"json"`
+	Level          LogLevel  `yaml:"level" default:"info" usage:"allows to set custom logger level" example:"info"`
+	ConsoleColored bool      `yaml:"console_colored" default:"false" usage:"allows to set colored console output" example:"false"`
+	Trace          LogLevel  `yaml:"trace" default:"fatal" usage:"allows to set custom trace level" example:"fatal"`
+	WithCaller     bool      `yaml:"with_caller" default:"false" usage:"allows to show caller" example:"false"`
+	WithStackTrace bool      `yaml:"with_stack_trace" default:"false" usage:"allows to show stack trace" example:"false"`
 }
 
 func (c *Config) Validate() error {
