@@ -1,8 +1,9 @@
 package testutils
 
 import (
-	"encoding/json"
 	"fmt"
+
+	"github.com/goccy/go-json"
 )
 
 func PrintJSON(v any) {

@@ -7,5 +7,5 @@ require github.com/google/go-cmp v0.7.0 // indirect
 require (
 	connectrpc.com/connect v1.18.1
 	golang.org/x/net v0.37.0 // indirect
-	google.golang.org/protobuf v1.36.5 // indirect
+	google.golang.org/protobuf v1.36.6 // indirect
 )
