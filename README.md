@@ -1,5 +1,10 @@
 # MX
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/tkcrm/mx.svg)](https://pkg.go.dev/github.com/tkcrm/mx)
+[![Go Version](https://img.shields.io/badge/go-1.25-blue)](https://go.dev/)
+[![Go Report Card](https://goreportcard.com/badge/github.com/tkcrm/mx)](https://goreportcard.com/report/github.com/tkcrm/mx)
+[![License](https://img.shields.io/github/license/tkcrm/mx)](LICENSE)
+
 A Go microservices framework with runtime launcher and services runner
 
 ## Features
