@@ -26,6 +26,16 @@ A Go microservices framework with runtime launcher and services runner
 - [x] ConnectRPC transport
 - [x] ConnectRPC client
 
+## AI Agent Skills
+
+This repository includes [AI agent skills](https://github.com/sxwebdev/skills) with documentation and usage examples for all packages. Install them with the [skills](https://github.com/sxwebdev/skills) CLI:
+
+```bash
+go install github.com/sxwebdev/skills/cmd/skills@latest
+skills init
+skills repo add tkcrm/mx
+```
+
 ## Launcher capabilities
 
 | Capability                     | Option / Interface                                                     | Description                                                                                     |
