@@ -36,20 +36,43 @@ type healthCheckerOpsService struct {
 }
 
 type HealthCheckerConfig struct {
-	Enabled      bool   `default:"false" usage:"allows to enable health checker" example:"true"`
-	Path         string `default:"/healthy" validate:"required" usage:"allows to set custom healthy path" example:"/healthy"`
-	Port         string `default:"10000" validate:"required" usage:"allows to set custom healthy port" example:"10000"`
+	Enabled bool   `default:"false" usage:"allows to enable health checker" example:"true"`
+	Path    string `default:"/healthy" validate:"required" usage:"allows to set custom healthy path" example:"/healthy"`
+	Port    string `default:"10000" validate:"required" usage:"allows to set custom healthy port" example:"10000"`
+
+	// LivenessPath is the HTTP path for the liveness probe (/livez).
+	// Empty string disables the endpoint.
+	LivenessPath string `default:"/livez" usage:"liveness probe path" example:"/livez"`
+
+	// ReadinessPath is the HTTP path for the readiness probe (/readyz).
+	// Empty string disables the endpoint.
+	ReadinessPath string `default:"/readyz" usage:"readiness probe path" example:"/readyz"`
+
 	servicesList []types.HealthChecker
+	statesList   []types.StateProvider
 }
 
 func (s *HealthCheckerConfig) AddServicesList(list []types.HealthChecker) {
 	s.servicesList = list
 }
 
+func (s *HealthCheckerConfig) AddStateList(list []types.StateProvider) {
+	s.statesList = list
+}
+
 func newHealthCheckerOpsService(
 	log logger.ExtendedLogger,
 	config HealthCheckerConfig,
 ) *healthCheckerOpsService {
+	if config.Path == "" {
+		config.Path = "/healthy"
+	}
+	if config.LivenessPath == "" {
+		config.LivenessPath = "/livez"
+	}
+	if config.ReadinessPath == "" {
+		config.ReadinessPath = "/readyz"
+	}
 	return &healthCheckerOpsService{
 		log:    log,
 		config: config,
@@ -171,6 +194,128 @@ func (s healthCheckerOpsService) getHTTPOptions() []http_transport.Option {
 
 func (s *healthCheckerOpsService) initService(mux *http.ServeMux) {
 	mux.Handle(s.config.Path, s)
+	if s.config.LivenessPath != "" {
+		mux.HandleFunc(s.config.LivenessPath, s.serveLiveness)
+	}
+	if s.config.ReadinessPath != "" {
+		mux.HandleFunc(s.config.ReadinessPath, s.serveReadiness)
+	}
+}
+
+// serveLiveness handles the /livez liveness probe.
+// Returns 200 if no service is in Failed state, 503 otherwise.
+// Liveness does not require HealthChecker — it reads ServiceState directly.
+func (s *healthCheckerOpsService) serveLiveness(w http.ResponseWriter, _ *http.Request) {
+	services := make(map[string]string, len(s.config.statesList))
+	hasFailed := false
+
+	for _, sp := range s.config.statesList {
+		state := sp.State()
+		services[sp.Name()] = state.String()
+		if state == types.ServiceStateFailed {
+			hasFailed = true
+		}
+	}
+
+	status := "ok"
+	resCode := http.StatusOK
+	if hasFailed {
+		status = "failed"
+		resCode = http.StatusServiceUnavailable
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(resCode)
+
+	if err := json.NewEncoder(w).Encode(map[string]any{
+		"status":   status,
+		"services": services,
+	}); err != nil {
+		s.log.Errorf("livez: could not write response: %s", err)
+	}
+}
+
+type readinessServiceEntry struct {
+	State  string `json:"state"`
+	Health string `json:"health"`
+}
+
+// serveReadiness handles the /readyz readiness probe.
+// Combines ServiceState with HealthChecker poll results.
+// Returns 200 only when all services are Running and all health checks pass.
+// Returns 424 if any service is Starting/Idle or a health check is still starting.
+// Returns 503 if any service is Failed or a health check returned an error.
+func (s *healthCheckerOpsService) serveReadiness(w http.ResponseWriter, _ *http.Request) {
+	entries := make(map[string]*readinessServiceEntry, len(s.config.statesList))
+	var existsErr, existsStarting bool
+
+	// populate state for every registered service
+	for _, sp := range s.config.statesList {
+		state := sp.State()
+		entry := &readinessServiceEntry{
+			State:  state.String(),
+			Health: "n/a",
+		}
+		entries[sp.Name()] = entry
+
+		switch state {
+		case types.ServiceStateFailed:
+			existsErr = true
+		case types.ServiceStateStarting, types.ServiceStateIdle:
+			existsStarting = true
+		}
+	}
+
+	// overlay HealthChecker poll results
+	s.resp.Range(func(key, val any) bool {
+		name, ok := key.(string)
+		if !ok {
+			return true
+		}
+		code, ok := val.(HealthCheckCode)
+		if !ok {
+			return true
+		}
+
+		entry, exists := entries[name]
+		if !exists {
+			entry = &readinessServiceEntry{State: "unknown"}
+			entries[name] = entry
+		}
+
+		switch code {
+		case HealthCheckCodeOk:
+			entry.Health = "ok"
+		case HealthCheckCodeError:
+			entry.Health = "error"
+			existsErr = true
+		case HealthCheckCodeServiceStarting:
+			entry.Health = "starting"
+			existsStarting = true
+		}
+		return true
+	})
+
+	status := "ok"
+	resCode := http.StatusOK
+	if existsStarting {
+		status = "starting"
+		resCode = http.StatusFailedDependency
+	}
+	if existsErr {
+		status = "unavailable"
+		resCode = http.StatusServiceUnavailable
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(resCode)
+
+	if err := json.NewEncoder(w).Encode(map[string]any{
+		"status":   status,
+		"services": entries,
+	}); err != nil {
+		s.log.Errorf("readyz: could not write response: %s", err)
+	}
 }
 
 var _ opsService = (*healthCheckerOpsService)(nil)

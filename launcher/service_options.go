@@ -31,8 +31,15 @@ type ServiceOptions struct {
 
 	Context context.Context //nolint:containedctx
 
-	// Default 10 seconds
+	// ShutdownTimeout is the maximum time to wait for Stop to complete. Default 10 seconds.
 	ShutdownTimeout time.Duration
+
+	// StartupTimeout is the maximum time to wait for the StartFn goroutine to signal an error
+	// after launch. Zero means no per-service startup timeout (the service runs until context cancel).
+	StartupTimeout time.Duration
+
+	// RestartPolicy defines how the service behaves after an unexpected exit.
+	RestartPolicy RestartPolicy
 }
 
 func (s *ServiceOptions) Validate() error {
@@ -116,6 +123,17 @@ func WithEnabled(v bool) ServiceOption {
 // WithShutdownTimeout sets the shutdown timeout of the service.
 func WithShutdownTimeout(v time.Duration) ServiceOption {
 	return func(o *ServiceOptions) { o.ShutdownTimeout = v }
+}
+
+// WithStartupTimeout sets the maximum time the service's StartFn is allowed to
+// run before being considered failed. Zero (default) means no startup timeout.
+func WithStartupTimeout(v time.Duration) ServiceOption {
+	return func(o *ServiceOptions) { o.StartupTimeout = v }
+}
+
+// WithRestartPolicy configures automatic restart behaviour after an unexpected exit.
+func WithRestartPolicy(p RestartPolicy) ServiceOption {
+	return func(o *ServiceOptions) { o.RestartPolicy = p }
 }
 
 // WithService wraps any value that implements Name/Start/Stop/Enabled/HealthChecker.
