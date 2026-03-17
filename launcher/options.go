@@ -2,6 +2,7 @@ package launcher
 
 import (
 	"context"
+	"time"
 
 	"github.com/tkcrm/mx/launcher/ops"
 	"github.com/tkcrm/mx/logger"
@@ -26,6 +27,10 @@ type Options struct {
 	RunnerServicesSequence RunnerServicesSequence
 
 	Signal bool
+
+	// GlobalShutdownTimeout limits the total time allowed for all services to stop.
+	// Zero means no global timeout (each service uses its own ShutdownTimeout).
+	GlobalShutdownTimeout time.Duration
 
 	Context context.Context //nolint:containedctx
 
@@ -75,6 +80,12 @@ func WithRunnerServicesSequence(v RunnerServicesSequence) Option {
 
 func WithSignal(b bool) Option {
 	return func(o *Options) { o.Signal = b }
+}
+
+// WithGlobalShutdownTimeout sets an upper bound on the total graceful shutdown duration.
+// If all services do not stop within this duration, the launcher exits immediately.
+func WithGlobalShutdownTimeout(d time.Duration) Option {
+	return func(o *Options) { o.GlobalShutdownTimeout = d }
 }
 
 func WithLogger(l logger.ExtendedLogger) Option {

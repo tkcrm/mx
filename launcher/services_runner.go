@@ -20,6 +20,8 @@ type IServicesRunner interface {
 	Register(services ...*Service)
 	// Services return all registered services
 	Services() []*Service
+	// Get returns a registered service by name, or false if not found.
+	Get(name string) (*Service, bool)
 }
 
 type servicesRunner struct {
@@ -77,6 +79,16 @@ func (s *servicesRunner) Services() []*Service {
 	return s.services
 }
 
+// Get returns a registered service by name, or false if not found.
+func (s *servicesRunner) Get(name string) (*Service, bool) {
+	for _, svc := range s.services {
+		if svc.Name() == name {
+			return svc, true
+		}
+	}
+	return nil, false
+}
+
 // hcServices return services that implement the HealthChecker interface.
 func (s *servicesRunner) hcServices() []types.HealthChecker {
 	services := []types.HealthChecker{}
@@ -86,4 +98,13 @@ func (s *servicesRunner) hcServices() []types.HealthChecker {
 		}
 	}
 	return services
+}
+
+// stateProviders returns all registered services as StateProvider.
+func (s *servicesRunner) stateProviders() []types.StateProvider {
+	providers := make([]types.StateProvider, len(s.services))
+	for i, svc := range s.services {
+		providers[i] = svc
+	}
+	return providers
 }

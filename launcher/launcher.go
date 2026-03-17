@@ -3,6 +3,7 @@ package launcher
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -63,6 +64,7 @@ func (l *launcher) Run() error { //nolint:cyclop
 	if l.opts.OpsConfig.Enabled {
 		if l.opts.OpsConfig.Healthy.Enabled {
 			l.opts.OpsConfig.Healthy.AddServicesList(l.servicesRunner.hcServices())
+			l.opts.OpsConfig.Healthy.AddStateList(l.servicesRunner.stateProviders())
 		}
 		opsSvcs := ops.New(l.opts.logger, l.opts.OpsConfig)
 		svcs := make([]*Service, len(opsSvcs))
@@ -144,12 +146,30 @@ func (l *launcher) Run() error { //nolint:cyclop
 
 	graceWait.Wait()
 
+	var stopCtx context.Context
+	var stopCtxCancel context.CancelFunc
+	if l.opts.GlobalShutdownTimeout > 0 {
+		stopCtx, stopCtxCancel = context.WithTimeout(context.Background(), l.opts.GlobalShutdownTimeout)
+	} else {
+		stopCtx, stopCtxCancel = context.WithCancel(context.Background())
+	}
+	defer stopCtxCancel()
+
+	// enforce global shutdown timeout
+	go func() {
+		<-stopCtx.Done()
+		if stopCtx.Err() == context.DeadlineExceeded {
+			l.opts.logger.Warnln("global shutdown timeout exceeded, forcing exit")
+			os.Exit(1)
+		}
+	}()
+
 	var stopErr error
 
 	// before stop
 	for _, fn := range l.opts.BeforeStop {
 		if err := fn(); err != nil {
-			stopErr = err
+			stopErr = errors.Join(stopErr, err)
 		}
 	}
 
@@ -201,7 +221,7 @@ func (l *launcher) Run() error { //nolint:cyclop
 	// after stop
 	for _, fn := range l.opts.AfterStop {
 		if err := fn(); err != nil {
-			stopErr = err
+			stopErr = errors.Join(stopErr, err)
 		}
 	}
 

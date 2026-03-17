@@ -17,12 +17,33 @@ A Go microservices framework with runtime launcher and services runner
 - [x] `HealthChecker` interface
 - [x] Metrics
 - [x] Health checker
+- [x] Liveness probe (`/livez`)
+- [x] Readiness probe (`/readyz`)
 - [x] Ping pong service
 - [x] Http transport
 - [x] GRPC transport
 - [x] GRPC client
 - [x] ConnectRPC transport
 - [x] ConnectRPC client
+
+## Launcher capabilities
+
+| Capability                     | Option / Interface                                                     | Description                                                                                     |
+| ------------------------------ | ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Lifecycle hooks                | `WithBeforeStart`, `WithAfterStart`, `WithBeforeStop`, `WithAfterStop` | Global hooks around app start/stop                                                              |
+| Service state machine          | `svc.State()`                                                          | Tracks each service: `idle → starting → running → stopping → stopped / failed`                  |
+| Service restart policy         | `WithRestartPolicy(RestartPolicy{...})`                                | `RestartOnFailure` / `RestartAlways` with exponential backoff                                   |
+| Startup timeout                | `WithStartupTimeout(d)`                                                | Fail the service if `StartFn` does not signal ready within `d`                                  |
+| Shutdown timeout (per service) | `WithShutdownTimeout(d)`                                               | Max time to wait for a service to stop                                                          |
+| Global shutdown timeout        | `WithGlobalShutdownTimeout(d)`                                         | Hard deadline for the entire graceful shutdown phase                                            |
+| Stop sequence                  | `WithRunnerServicesSequence(...)`                                      | `None` (parallel) / `Fifo` / `Lifo`                                                             |
+| Service lookup                 | `ServicesRunner().Get(name)`                                           | Retrieve a registered service by name at runtime                                                |
+| Health checker                 | `types.HealthChecker` interface                                        | Periodic per-service health check, polled on a configurable interval                            |
+| Liveness probe                 | ops `/livez`                                                           | `200` healthy / `503` if any service is in `Failed` state                                       |
+| Readiness probe                | ops `/readyz`                                                          | `200` ready / `424` starting / `503` failed — combines `ServiceState` + `HealthChecker` results |
+| Legacy health endpoint         | ops `/healthy`                                                         | Backward-compatible endpoint (HealthChecker results only)                                       |
+| Metrics                        | ops `/metrics`                                                         | Prometheus metrics endpoint                                                                     |
+| Profiler                       | ops `/debug/pprof`                                                     | Go pprof profiler endpoint                                                                      |
 
 ## How to use
 
