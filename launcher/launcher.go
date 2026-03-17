@@ -9,8 +9,7 @@ import (
 	"slices"
 	"sync"
 
-	"github.com/tkcrm/mx/ops"
-	"github.com/tkcrm/mx/service"
+	"github.com/tkcrm/mx/launcher/ops"
 	signalutil "github.com/tkcrm/mx/util/signal"
 	"golang.org/x/sync/errgroup"
 )
@@ -66,9 +65,9 @@ func (l *launcher) Run() error { //nolint:cyclop
 			l.opts.OpsConfig.Healthy.AddServicesList(l.servicesRunner.hcServices())
 		}
 		opsSvcs := ops.New(l.opts.logger, l.opts.OpsConfig)
-		svcs := make([]*service.Service, len(opsSvcs))
+		svcs := make([]*Service, len(opsSvcs))
 		for i := range opsSvcs {
-			svcs[i] = service.New(service.WithService(opsSvcs[i]))
+			svcs[i] = NewService(WithService(opsSvcs[i]))
 		}
 		l.servicesRunner.Register(svcs...)
 	}
@@ -85,7 +84,7 @@ func (l *launcher) Run() error { //nolint:cyclop
 	graceWait := new(sync.WaitGroup)
 	graceWait.Add(len(l.servicesRunner.Services()))
 	for i := range l.servicesRunner.Services() {
-		go func(svc *service.Service) {
+		go func(svc *Service) {
 			defer graceWait.Done()
 			if err := svc.Start(); err != nil {
 				err := fmt.Errorf("failed to start service [%s]: %w", svc.Name(), err)
@@ -108,17 +107,39 @@ func (l *launcher) Run() error { //nolint:cyclop
 	ch := make(chan os.Signal, 1)
 	if l.opts.Signal {
 		signal.Notify(ch, signalutil.Shutdown()...)
+		defer signal.Stop(ch)
 	}
+
+	var forceExitCancel context.CancelFunc
 
 	select {
 	// wait on services error
 	case err := <-errChan:
+		l.cancelFn()
+		graceWait.Wait()
 		return err
 	// wait on kill signal
 	case <-ch:
 		l.cancelFn()
+		l.opts.logger.Warnln("graceful shutdown started, send signal again to force exit")
+		if l.opts.Signal {
+			var forceCtx context.Context
+			forceCtx, forceExitCancel = context.WithCancel(context.Background())
+			go func() {
+				select {
+				case <-ch:
+					l.opts.logger.Warnln("received second signal, forcing exit")
+					os.Exit(1)
+				case <-forceCtx.Done():
+				}
+			}()
+		}
 	// wait on context cancel
 	case <-l.opts.Context.Done():
+	}
+
+	if forceExitCancel != nil {
+		defer forceExitCancel()
 	}
 
 	graceWait.Wait()
@@ -162,7 +183,7 @@ func (l *launcher) Run() error { //nolint:cyclop
 		}
 	case RunnerServicesSequenceLifo:
 		{
-			reverted := make([]*service.Service, len(l.servicesRunner.Services()))
+			reverted := make([]*Service, len(l.servicesRunner.Services()))
 			copy(reverted, l.servicesRunner.Services())
 			slices.Reverse(reverted)
 			for _, svc := range reverted {

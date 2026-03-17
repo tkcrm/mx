@@ -3,8 +3,8 @@ package launcher
 import (
 	"context"
 
+	"github.com/tkcrm/mx/launcher/types"
 	"github.com/tkcrm/mx/logger"
-	"github.com/tkcrm/mx/service"
 )
 
 type RunnerServicesSequence int
@@ -16,33 +16,33 @@ const (
 )
 
 type IServicesRunner interface {
-	// Register servicse
-	Register(services ...*service.Service)
+	// Register services
+	Register(services ...*Service)
 	// Services return all registered services
-	Services() []*service.Service
+	Services() []*Service
 }
 
 type servicesRunner struct {
 	logger   logger.Logger
-	services []*service.Service
+	services []*Service
 	ctx      context.Context //nolint:containedctx
 }
 
 func newServicesRunner(ctx context.Context, logger logger.Logger) *servicesRunner {
 	return &servicesRunner{
 		logger:   logger,
-		services: make([]*service.Service, 0),
+		services: make([]*Service, 0),
 		ctx:      ctx,
 	}
 }
 
-func (s *servicesRunner) Register(services ...*service.Service) {
+func (s *servicesRunner) Register(services ...*Service) {
 	for _, svc := range services {
 		s.registerService(svc)
 	}
 }
 
-func (s *servicesRunner) registerService(svc *service.Service) {
+func (s *servicesRunner) registerService(svc *Service) {
 	if svc == nil {
 		s.logger.Error("trying to register nil service")
 		return
@@ -73,13 +73,13 @@ func (s *servicesRunner) registerService(svc *service.Service) {
 	s.services = append(s.services, svc)
 }
 
-func (s *servicesRunner) Services() []*service.Service {
+func (s *servicesRunner) Services() []*Service {
 	return s.services
 }
 
-// hcServices return services that implements HealthChecker interface.
-func (s *servicesRunner) hcServices() []service.HealthChecker {
-	services := []service.HealthChecker{}
+// hcServices return services that implement the HealthChecker interface.
+func (s *servicesRunner) hcServices() []types.HealthChecker {
+	services := []types.HealthChecker{}
 	for _, svc := range s.services {
 		if svc.Options().HealthChecker != nil {
 			services = append(services, svc.Options().HealthChecker)
