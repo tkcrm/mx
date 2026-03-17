@@ -1,36 +1,28 @@
-package service
+package launcher
 
 import (
 	"context"
-	"os"
-	"os/signal"
 	"time"
-
-	signalutil "github.com/tkcrm/mx/util/signal"
 )
 
-type IService interface {
-	Name() string
-	Start(ctx context.Context) error
-	Stop(ctx context.Context) error
-}
-
+// Service wraps a lifecycle-managed unit with Start/Stop functions and hooks.
 type Service struct {
-	opts Options
+	opts ServiceOptions
 
 	isStarted bool
 	isStopped bool
 }
 
-func New(opts ...Option) *Service {
+// NewService creates a new Service.
+func NewService(opts ...ServiceOption) *Service {
 	return &Service{
-		opts: newOptions(opts...),
+		opts: newServiceOptions(opts...),
 	}
 }
 
 func (s Service) Name() string { return s.opts.Name }
 
-func (s *Service) Options() *Options { return &s.opts }
+func (s *Service) Options() *ServiceOptions { return &s.opts }
 
 func (s Service) String() string { return "mx" }
 
@@ -44,7 +36,6 @@ func (s *Service) Start() error {
 		return nil
 	}
 
-	// skip if service already started
 	if s.isStarted {
 		return nil
 	}
@@ -75,18 +66,9 @@ func (s *Service) Start() error {
 		}
 	}
 
-	ch := make(chan os.Signal, 1)
-	if s.opts.Signal {
-		signal.Notify(ch, signalutil.Shutdown()...)
-	}
-
 	select {
-	// wait on service error
 	case err := <-errChan:
 		return err
-	// wait on kill signal
-	case <-ch:
-	// wait on context cancel
 	case <-s.opts.Context.Done():
 	}
 
@@ -111,7 +93,6 @@ func (s *Service) Stop() error {
 		return nil
 	}
 
-	// skip if service already stopped or not started
 	if s.isStopped || !s.isStarted {
 		return nil
 	}
@@ -142,13 +123,10 @@ func (s *Service) Stop() error {
 	}()
 
 	select {
-	// success stop
 	case <-doneChan:
 		s.opts.Logger.Infof("service [%s] was stopped", s.Name())
-	// stop with error
 	case err := <-errChan:
 		return err
-	// stop by context
 	case <-ctx.Done():
 		s.opts.Logger.Infof("failed to stop service [%s]. stop by timeout", s.Name())
 	}

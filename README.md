@@ -13,8 +13,8 @@ A Go microservices framework with runtime launcher and services runner
 - [x] Launcher
 - [x] Services
 - [x] Services runner
-- [x] Service `Enabler` interface
-- [x] Service `HealthChecker` interface
+- [x] `Enabler` interface
+- [x] `HealthChecker` interface
 - [x] Metrics
 - [x] Health checker
 - [x] Ping pong service
@@ -23,7 +23,6 @@ A Go microservices framework with runtime launcher and services runner
 - [x] GRPC client
 - [x] ConnectRPC transport
 - [x] ConnectRPC client
-- [x] Config loader
 
 ## How to use
 
@@ -60,12 +59,12 @@ ln := launcher.New(
 
 ```go
 // init
-svc := service.New(
-    service.WithName("test-service"),
-    service.WithStart(func(_ context.Context) error {
+svc := launcher.NewService(
+    launcher.WithServiceName("test-service"),
+    launcher.WithStart(func(_ context.Context) error {
         return nil
     }),
-    service.WithStop(func(_ context.Context) error {
+    launcher.WithStop(func(_ context.Context) error {
         time.Sleep(time.Second * 3)
         return nil
     }),
@@ -78,21 +77,21 @@ ln.ServicesRunner().Register(svc)
 ### Init and register ping pong service
 
 ```go
+import "github.com/tkcrm/mx/launcher/services/pingpong"
+
 // init
-pingPongSvc := service.New(service.WithService(pingpong.New(logger)))
+pingPongSvc := launcher.NewService(launcher.WithService(pingpong.New(logger)))
 
 // register in launcher
 ln.ServicesRunner().Register(pingPongSvc)
 ```
 
-You can also register any service that implements the following interface
+### Register any service that implements IService
+
+Any struct with `Name()`, `Start()`, and `Stop()` methods satisfies `types.IService` and can be wrapped with `launcher.NewService`:
 
 ```go
-type IService interface {
-    Name() string
-    Start(ctx context.Context) error
-    Stop(ctx context.Context) error
-}
+import "github.com/tkcrm/mx/launcher/types"
 
 type books struct {
     name       string
@@ -119,42 +118,27 @@ func (s books) Start(ctx context.Context) error {
 
 func (s books) Stop(ctx context.Context) error { return nil }
 
-var _ service.HealthChecker = (*books)(nil)
-
-var _ service.IService = (*books)(nil)
+var _ types.HealthChecker = (*books)(nil)
+var _ types.IService = (*books)(nil)
 
 func main() {
     ln := launcher.New()
 
     // register service in launcher with health checker
     ln.ServicesRunner().Register(
-        service.New(
-            service.WithService(New()),
+        launcher.NewService(
+            launcher.WithService(New()),
         ),
     )
 }
 ```
 
-### Start launcher and all services with graceful shutdown
+### Graceful shutdown
+
+The first signal (SIGTERM / SIGINT / SIGQUIT) starts a graceful shutdown. A second signal forces immediate exit.
 
 ```go
 if err := ln.Run(); err != nil {
     logger.Fatal(err)
-}
-```
-
-## Config loader
-
-```go
-type Config struct {
-    ServiceName string            `default:"mx-example" validate:"required"`
-    Prometheus  prometheus.Config
-    Ops         ops.Config
-    Grpc        grpc_transport.Config
-}
-
-conf := new(Config)
-if err := cfg.Load(conf); err != nil {
-    logger.Fatalf("could not load configuration: %s", err)
 }
 ```

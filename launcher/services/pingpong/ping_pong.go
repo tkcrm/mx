@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tkcrm/mx/service"
+	"github.com/tkcrm/mx/launcher/types"
 )
 
 var (
@@ -72,4 +72,4 @@ func (p *PingPong) Stop(_ context.Context) error {
 	return nil
 }
 
-var _ service.IService = (*PingPong)(nil)
+var _ types.IService = (*PingPong)(nil)

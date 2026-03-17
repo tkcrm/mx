@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/tkcrm/mx/launcher/types"
 	"github.com/tkcrm/mx/logger"
-	"github.com/tkcrm/mx/service"
 	"github.com/tkcrm/mx/transport/http_transport"
 )
 
@@ -26,7 +26,7 @@ var (
 	ErrHealthCheckServiceStarting = errors.New("service is starting")
 )
 
-// health implements service.Service
+// health implements service lifecycle
 // and used as worker pool for HealthChecker.
 type healthCheckerOpsService struct {
 	log    logger.ExtendedLogger
@@ -39,10 +39,10 @@ type HealthCheckerConfig struct {
 	Enabled      bool   `default:"false" usage:"allows to enable health checker" example:"true"`
 	Path         string `default:"/healthy" validate:"required" usage:"allows to set custom healthy path" example:"/healthy"`
 	Port         string `default:"10000" validate:"required" usage:"allows to set custom healthy port" example:"10000"`
-	servicesList []service.HealthChecker
+	servicesList []types.HealthChecker
 }
 
-func (s *HealthCheckerConfig) AddServicesList(list []service.HealthChecker) {
+func (s *HealthCheckerConfig) AddServicesList(list []types.HealthChecker) {
 	s.servicesList = list
 }
 
@@ -101,7 +101,7 @@ func (s *healthCheckerOpsService) ServeHTTP(w http.ResponseWriter, _ *http.Reque
 	}
 }
 
-// implementation of service.IService for OPS worker.
+// Start implements service lifecycle for OPS health checker worker.
 func (s *healthCheckerOpsService) Start(ctx context.Context) error {
 	wg := new(sync.WaitGroup)
 
@@ -114,8 +114,7 @@ func (s *healthCheckerOpsService) Start(ctx context.Context) error {
 
 		s.resp.Store(s.config.servicesList[i].Name(), 0)
 
-		// run health checker for each service
-		go func(checker service.HealthChecker) {
+		go func(checker types.HealthChecker) {
 			defer wg.Done()
 
 			name := checker.Name()

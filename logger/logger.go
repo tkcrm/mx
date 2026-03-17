@@ -84,7 +84,7 @@ func With(l Logger, args ...any) Logger {
 		lg.appVersion,
 		lg.zapConfig,
 		lg.options,
-		lg.sugaredLogger.With(args...),
+		lg.With(args...),
 	}
 }
 
@@ -103,7 +103,7 @@ func WithExtended(l ExtendedLogger, args ...any) ExtendedLogger {
 		lg.appVersion,
 		lg.zapConfig,
 		lg.options,
-		lg.sugaredLogger.With(args...),
+		lg.With(args...),
 	}
 }
 

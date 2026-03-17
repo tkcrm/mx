@@ -1,3 +1,8 @@
+// It's okay to expose pprof from this binary since the port it is exposed on
+// is not accessible from the outside of Kubernetes cluster (only inside of it).
+//
+// #nosec G108 (CWE-200): Profiling endpoint is automatically exposed on /debug/pprof
+
 package ops
 
 import (
