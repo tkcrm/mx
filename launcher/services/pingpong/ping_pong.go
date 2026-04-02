@@ -72,4 +72,13 @@ func (p *PingPong) Stop(_ context.Context) error {
 	return nil
 }
 
-var _ types.IService = (*PingPong)(nil)
+// Interval returns the health check polling interval.
+func (p *PingPong) Interval() time.Duration { return p.timeout }
+
+// Healthy always returns nil — PingPong has no external dependencies.
+func (p *PingPong) Healthy(_ context.Context) error { return nil }
+
+var (
+	_ types.IService      = (*PingPong)(nil)
+	_ types.HealthChecker = (*PingPong)(nil)
+)

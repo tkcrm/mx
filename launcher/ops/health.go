@@ -135,7 +135,7 @@ func (s *healthCheckerOpsService) Start(ctx context.Context) error {
 			continue
 		}
 
-		s.resp.Store(s.config.servicesList[i].Name(), 0)
+		s.resp.Store(s.config.servicesList[i].Name(), HealthCheckCodeServiceStarting)
 
 		go func(checker types.HealthChecker) {
 			defer wg.Done()

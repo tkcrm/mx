@@ -11,7 +11,6 @@ import (
 	"sync"
 
 	"github.com/tkcrm/mx/launcher/ops"
-	signalutil "github.com/tkcrm/mx/util/signal"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -108,7 +107,7 @@ func (l *launcher) Run() error { //nolint:cyclop
 
 	ch := make(chan os.Signal, 1)
 	if l.opts.Signal {
-		signal.Notify(ch, signalutil.Shutdown()...)
+		signal.Notify(ch, ShutdownSiganl()...)
 		defer signal.Stop(ch)
 	}
 
