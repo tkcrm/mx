@@ -73,7 +73,7 @@ func (p *PingPong) Stop(_ context.Context) error {
 }
 
 // Interval returns the health check polling interval.
-func (p *PingPong) Interval() time.Duration { return p.timeout }
+func (p *PingPong) Interval() time.Duration { return time.Second }
 
 // Healthy always returns nil — PingPong has no external dependencies.
 func (p *PingPong) Healthy(_ context.Context) error { return nil }
