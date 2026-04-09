@@ -40,6 +40,13 @@ type ServiceOptions struct {
 
 	// RestartPolicy defines how the service behaves after an unexpected exit.
 	RestartPolicy RestartPolicy
+
+	// StartupPriority controls service startup ordering.
+	// Services are grouped by priority and started group-by-group in ascending order.
+	// Services within the same priority group start concurrently.
+	// All services in a group must reach Running state before the next group starts.
+	// Priority 0 (default): start concurrently after all prioritized groups are ready.
+	StartupPriority int
 }
 
 func (s *ServiceOptions) Validate() error {
@@ -134,6 +141,14 @@ func WithStartupTimeout(v time.Duration) ServiceOption {
 // WithRestartPolicy configures automatic restart behaviour after an unexpected exit.
 func WithRestartPolicy(p RestartPolicy) ServiceOption {
 	return func(o *ServiceOptions) { o.RestartPolicy = p }
+}
+
+// WithStartupPriority sets the startup priority for the service.
+// Services with the same priority start concurrently within a group.
+// Groups are started sequentially in ascending priority order.
+// Priority 0 (default) services start last, concurrently.
+func WithStartupPriority(p int) ServiceOption {
+	return func(o *ServiceOptions) { o.StartupPriority = p }
 }
 
 // WithService wraps any value that implements Name/Start/Stop/Enabled/HealthChecker.

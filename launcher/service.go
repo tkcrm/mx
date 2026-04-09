@@ -23,16 +23,21 @@ const (
 
 // Service wraps a lifecycle-managed unit with Start/Stop functions and hooks.
 type Service struct {
-	opts  ServiceOptions
-	state ServiceState
+	opts    ServiceOptions
+	state   ServiceState
+	readyCh chan struct{}
 }
 
 // NewService creates a new Service.
 func NewService(opts ...ServiceOption) *Service {
 	return &Service{
-		opts: newServiceOptions(opts...),
+		opts:    newServiceOptions(opts...),
+		readyCh: make(chan struct{}),
 	}
 }
+
+// Ready returns a channel that is closed when the service transitions to Running state.
+func (s *Service) Ready() <-chan struct{} { return s.readyCh }
 
 func (s Service) Name() string { return s.opts.Name }
 
@@ -44,6 +49,14 @@ func (s *Service) Options() *ServiceOptions { return &s.opts }
 func (s Service) String() string { return "mx" }
 
 func (s *Service) Start() error {
+	defer func() {
+		select {
+		case <-s.readyCh:
+		default:
+			close(s.readyCh)
+		}
+	}()
+
 	if s.opts.StartFn == nil {
 		return nil
 	}
@@ -99,6 +112,12 @@ func (s *Service) runWithRestarts() error {
 
 		s.state = ServiceStateRunning
 
+		select {
+		case <-s.readyCh:
+		default:
+			close(s.readyCh)
+		}
+
 		if !afterStartDone {
 			afterStartDone = true
 			for _, fn := range s.opts.AfterStart {
@@ -122,7 +141,6 @@ func (s *Service) runWithRestarts() error {
 			case <-time.After(s.opts.StartupTimeout):
 				exitErr = fmt.Errorf("service [%s] startup timeout exceeded (%s)", s.Name(), s.opts.StartupTimeout)
 			case <-s.opts.Context.Done():
-				// graceful shutdown: wait for StartFn goroutine
 				select {
 				case <-time.After(s.opts.ShutdownTimeout):
 					s.opts.Logger.Infof("service [%s] was stopped by timeout", s.Name())
@@ -138,7 +156,6 @@ func (s *Service) runWithRestarts() error {
 			case <-doneChan:
 				cleanExit = true
 			case <-s.opts.Context.Done():
-				// graceful shutdown: wait for StartFn goroutine
 				select {
 				case <-time.After(s.opts.ShutdownTimeout):
 					s.opts.Logger.Infof("service [%s] was stopped by timeout", s.Name())

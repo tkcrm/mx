@@ -46,6 +46,7 @@ skills repo add tkcrm/mx
 | Startup timeout                | `WithStartupTimeout(d)`                                                | Fail the service if `StartFn` does not signal ready within `d`                                  |
 | Shutdown timeout (per service) | `WithShutdownTimeout(d)`                                               | Max time to wait for a service to stop                                                          |
 | Global shutdown timeout        | `WithGlobalShutdownTimeout(d)`                                         | Hard deadline for the entire graceful shutdown phase                                            |
+| Startup priority               | `WithStartupPriority(n)`                                               | Group-based startup ordering: same priority starts concurrently, groups run in ascending order  |
 | Stop sequence                  | `WithRunnerServicesSequence(...)`                                      | `None` (parallel) / `Fifo` / `Lifo`                                                             |
 | Service lookup                 | `ServicesRunner().Get(name)`                                           | Retrieve a registered service by name at runtime                                                |
 | Health checker                 | `types.HealthChecker` interface                                        | Periodic per-service health check, polled on a configurable interval                            |
@@ -162,6 +163,42 @@ func main() {
         ),
     )
 }
+```
+
+### Startup priority
+
+Services can be assigned a startup priority to control initialization order. Services with the same priority start concurrently within a group. Groups are started sequentially in ascending priority order. Priority 0 (default) services start last, concurrently, after all prioritized groups are ready.
+
+```go
+ln.ServicesRunner().Register(
+    // Priority 1: DB layer — start concurrently, both must be ready before next group
+    launcher.NewService(
+        launcher.WithServiceName("postgres"),
+        launcher.WithStartupPriority(1),
+        launcher.WithService(pgService),
+    ),
+    launcher.NewService(
+        launcher.WithServiceName("redis"),
+        launcher.WithStartupPriority(1),
+        launcher.WithService(redisService),
+    ),
+    // Priority 2: message broker — waits for DB layer to be ready
+    launcher.NewService(
+        launcher.WithServiceName("rabbitmq"),
+        launcher.WithStartupPriority(2),
+        launcher.WithService(rabbitService),
+    ),
+    // Priority 0 (default): application services — start concurrently after all groups
+    launcher.NewService(
+        launcher.WithServiceName("http-server"),
+        launcher.WithService(httpService),
+    ),
+    launcher.NewService(
+        launcher.WithServiceName("grpc-server"),
+        launcher.WithService(grpcService),
+    ),
+)
+// Start order: (postgres + redis) → rabbitmq → (http + grpc concurrently)
 ```
 
 ### Graceful shutdown

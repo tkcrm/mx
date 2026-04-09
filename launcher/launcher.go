@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"slices"
 	"sync"
+	"time"
 
 	"github.com/tkcrm/mx/launcher/ops"
 	"golang.org/x/sync/errgroup"
@@ -80,18 +81,74 @@ func (l *launcher) Run() error { //nolint:cyclop
 		}
 	}
 
-	// start service
+	// group services by startup priority
+	groups := make(map[int][]*Service)
+	for _, svc := range l.servicesRunner.Services() {
+		p := svc.Options().StartupPriority
+		groups[p] = append(groups[p], svc)
+	}
+
+	// collect and sort unique priorities (excluding 0)
+	var priorities []int
+	for p := range groups {
+		if p > 0 {
+			priorities = append(priorities, p)
+		}
+	}
+	slices.Sort(priorities)
+
 	errChan := make(chan error, len(l.servicesRunner.Services()))
 	graceWait := new(sync.WaitGroup)
-	graceWait.Add(len(l.servicesRunner.Services()))
-	for i := range l.servicesRunner.Services() {
-		go func(svc *Service) {
+
+	startSvc := func(svc *Service) {
+		graceWait.Add(1)
+		go func() {
 			defer graceWait.Done()
 			if err := svc.Start(); err != nil {
-				err := fmt.Errorf("failed to start service [%s]: %w", svc.Name(), err)
-				errChan <- err
+				errChan <- fmt.Errorf("failed to start service [%s]: %w", svc.Name(), err)
 			}
-		}(l.servicesRunner.Services()[i])
+		}()
+	}
+
+	// start priority groups sequentially; within each group — concurrently
+	for _, p := range priorities {
+		group := groups[p]
+
+		for _, svc := range group {
+			startSvc(svc)
+		}
+
+		// wait for ALL services in this group to become ready
+		for _, svc := range group {
+			select {
+			case <-svc.Ready():
+			case err := <-errChan:
+				l.cancelFn()
+				graceWait.Wait()
+				return err
+			case <-l.opts.Context.Done():
+				graceWait.Wait()
+				return l.opts.Context.Err()
+			}
+		}
+
+		// Yield to let any immediate service failures propagate.
+		// A service that fails synchronously closes readyCh (via deferred Start)
+		// before the error reaches errChan. This sleep gives startSvc goroutines
+		// time to deliver the error after Start() returns.
+		time.Sleep(time.Nanosecond)
+		select {
+		case err := <-errChan:
+			l.cancelFn()
+			graceWait.Wait()
+			return err
+		default:
+		}
+	}
+
+	// start priority-0 services — all concurrently
+	for _, svc := range groups[0] {
+		startSvc(svc)
 	}
 
 	if l.opts.AppStartStopLog {
@@ -101,6 +158,8 @@ func (l *launcher) Run() error { //nolint:cyclop
 	// after start
 	for _, fn := range l.opts.AfterStart {
 		if err := fn(); err != nil {
+			l.cancelFn()
+			graceWait.Wait()
 			return err
 		}
 	}

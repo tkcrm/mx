@@ -50,6 +50,7 @@ user-invocable: false
 - **Ops are separate**: Health checks, metrics, and profiler run on a dedicated HTTP server (default port 10000), not on the application transport.
 - **Context flows down**: The Launcher creates a root context that is passed to all services. Services should respect `<-ctx.Done()` in their Start function.
 - **Restart policies are per-service**: Configure `RestartOnFailure` or `RestartAlways` with exponential backoff on individual services, not globally.
+- **Startup priority groups**: Services with `StartupPriority > 0` start in ascending group order (same priority = concurrent within group). All must be ready before the next group. Priority 0 (default) starts last, concurrently.
 
 ## Related files
 

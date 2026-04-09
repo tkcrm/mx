@@ -98,7 +98,29 @@ ln.ServicesRunner().Register(
 )
 ```
 
-## 6. (Optional) Add lifecycle hooks
+## 6. (Optional) Set startup priority
+
+For infrastructure services that must be ready before other services start:
+
+```go
+ln.ServicesRunner().Register(
+    // Priority 1 services start first (same priority = concurrent within group)
+    launcher.NewService(
+        launcher.WithService(dbSvc),
+        launcher.WithStartupPriority(1),
+    ),
+    launcher.NewService(
+        launcher.WithService(redisSvc),
+        launcher.WithStartupPriority(1),
+    ),
+    // Priority 0 (default) starts last, after all prioritized groups are ready
+    launcher.NewService(
+        launcher.WithService(appSvc),
+    ),
+)
+```
+
+## 7. (Optional) Add lifecycle hooks
 
 ```go
 ln.ServicesRunner().Register(
@@ -116,7 +138,7 @@ ln.ServicesRunner().Register(
 )
 ```
 
-## 7. Verify
+## 8. Verify
 
 - [ ] Service implements `types.IService` (Name, Start, Stop)
 - [ ] Start function blocks until `ctx.Done()` or work completes
