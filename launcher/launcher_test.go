@@ -1,4 +1,4 @@
-package launcher
+package launcher_test
 
 import (
 	"context"
@@ -9,12 +9,14 @@ import (
 	"testing"
 	"testing/synctest"
 	"time"
+
+	"github.com/tkcrm/mx/launcher"
 )
 
 // newTestLauncher creates a launcher suitable for synctest (signals disabled).
-func newTestLauncher(opts ...Option) ILauncher {
-	defaults := []Option{WithSignal(false)}
-	return New(append(defaults, opts...)...)
+func newTestLauncher(opts ...launcher.Option) launcher.ILauncher {
+	defaults := []launcher.Option{launcher.WithSignal(false)}
+	return launcher.New(append(defaults, opts...)...)
 }
 
 // blockingStart is a StartFn that blocks until ctx is cancelled.
@@ -30,13 +32,13 @@ func noopStop(_ context.Context) error { return nil }
 
 func TestService_StartStop_Basic(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		svc := NewService(
-			WithServiceName("basic"),
-			WithStart(blockingStart),
-			WithStop(noopStop),
+		svc := launcher.NewService(
+			launcher.WithServiceName("basic"),
+			launcher.WithStart(blockingStart),
+			launcher.WithStop(noopStop),
 		)
 
-		if svc.State() != ServiceStateIdle {
+		if svc.State() != launcher.ServiceStateIdle {
 			t.Fatalf("initial state = %v; want idle", svc.State())
 		}
 
@@ -48,7 +50,7 @@ func TestService_StartStop_Basic(t *testing.T) {
 
 		synctest.Wait()
 
-		if svc.State() != ServiceStateRunning {
+		if svc.State() != launcher.ServiceStateRunning {
 			t.Fatalf("after start, state = %v; want running", svc.State())
 		}
 
@@ -69,7 +71,7 @@ func TestService_StartStop_Basic(t *testing.T) {
 			t.Fatalf("Stop returned error: %v", err)
 		}
 
-		if svc.State() != ServiceStateStopped {
+		if svc.State() != launcher.ServiceStateStopped {
 			t.Fatalf("after stop, state = %v; want stopped", svc.State())
 		}
 	})
@@ -77,7 +79,7 @@ func TestService_StartStop_Basic(t *testing.T) {
 
 func TestService_NilStartFn(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		svc := NewService(WithServiceName("nil-start"))
+		svc := launcher.NewService(launcher.WithServiceName("nil-start"))
 		if err := svc.Start(); err != nil {
 			t.Fatalf("Start with nil StartFn should return nil, got: %v", err)
 		}
@@ -92,15 +94,15 @@ func TestService_NilStartFn(t *testing.T) {
 func TestService_Disabled(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		started := false
-		svc := NewService(
-			WithServiceName("disabled"),
-			WithStart(func(ctx context.Context) error {
+		svc := launcher.NewService(
+			launcher.WithServiceName("disabled"),
+			launcher.WithStart(func(ctx context.Context) error {
 				started = true
 				<-ctx.Done()
 				return nil
 			}),
-			WithStop(noopStop),
-			WithEnabled(false),
+			launcher.WithStop(noopStop),
+			launcher.WithEnabled(false),
 		)
 		svc.Options().Context = context.Background()
 
@@ -119,14 +121,14 @@ func TestService_DoubleStart_Ignored(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		svc := NewService(
-			WithServiceName("double"),
-			WithStart(func(ctx context.Context) error {
+		svc := launcher.NewService(
+			launcher.WithServiceName("double"),
+			launcher.WithStart(func(ctx context.Context) error {
 				startCount.Add(1)
 				<-ctx.Done()
 				return nil
 			}),
-			WithStop(noopStop),
+			launcher.WithStop(noopStop),
 		)
 		svc.Options().Context = ctx
 
@@ -144,10 +146,10 @@ func TestService_DoubleStart_Ignored(t *testing.T) {
 }
 
 func TestService_StopIdempotent(t *testing.T) {
-	svc := NewService(
-		WithServiceName("idempotent-stop"),
-		WithStart(blockingStart),
-		WithStop(noopStop),
+	svc := launcher.NewService(
+		launcher.WithServiceName("idempotent-stop"),
+		launcher.WithStart(blockingStart),
+		launcher.WithStop(noopStop),
 	)
 	if err := svc.Stop(); err != nil {
 		t.Fatalf("Stop on idle service returned error: %v", err)
@@ -159,11 +161,11 @@ func TestService_StopIdempotent(t *testing.T) {
 func TestService_BeforeStartHook_Error(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		hookErr := errors.New("before start failed")
-		svc := NewService(
-			WithServiceName("hook-err"),
-			WithStart(blockingStart),
-			WithStop(noopStop),
-			WithServiceBeforeStart(func() error { return hookErr }),
+		svc := launcher.NewService(
+			launcher.WithServiceName("hook-err"),
+			launcher.WithStart(blockingStart),
+			launcher.WithStop(noopStop),
+			launcher.WithServiceBeforeStart(func() error { return hookErr }),
 		)
 		svc.Options().Context = context.Background()
 
@@ -171,10 +173,9 @@ func TestService_BeforeStartHook_Error(t *testing.T) {
 		if !errors.Is(err, hookErr) {
 			t.Fatalf("Start error = %v; want %v", err, hookErr)
 		}
-		if svc.State() != ServiceStateFailed {
+		if svc.State() != launcher.ServiceStateFailed {
 			t.Fatalf("state = %v; want failed", svc.State())
 		}
-
 	})
 }
 
@@ -184,11 +185,11 @@ func TestService_AfterStartHook_Error(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		svc := NewService(
-			WithServiceName("after-hook-err"),
-			WithStart(blockingStart),
-			WithStop(noopStop),
-			WithServiceAfterStart(func() error { return hookErr }),
+		svc := launcher.NewService(
+			launcher.WithServiceName("after-hook-err"),
+			launcher.WithStart(blockingStart),
+			launcher.WithStop(noopStop),
+			launcher.WithServiceAfterStart(func() error { return hookErr }),
 		)
 		svc.Options().Context = ctx
 
@@ -196,7 +197,7 @@ func TestService_AfterStartHook_Error(t *testing.T) {
 		if !errors.Is(err, hookErr) {
 			t.Fatalf("Start error = %v; want %v", err, hookErr)
 		}
-		if svc.State() != ServiceStateFailed {
+		if svc.State() != launcher.ServiceStateFailed {
 			t.Fatalf("state = %v; want failed", svc.State())
 		}
 	})
@@ -208,15 +209,15 @@ func TestService_BeforeStopAfterStop_Hooks(t *testing.T) {
 
 		ctx, cancel := context.WithCancel(context.Background())
 
-		svc := NewService(
-			WithServiceName("stop-hooks"),
-			WithStart(blockingStart),
-			WithStop(noopStop),
-			WithServiceBeforeStop(func() error {
+		svc := launcher.NewService(
+			launcher.WithServiceName("stop-hooks"),
+			launcher.WithStart(blockingStart),
+			launcher.WithStop(noopStop),
+			launcher.WithServiceBeforeStop(func() error {
 				order = append(order, "before")
 				return nil
 			}),
-			WithServiceAfterStop(func() error {
+			launcher.WithServiceAfterStop(func() error {
 				order = append(order, "after")
 				return nil
 			}),
@@ -242,11 +243,11 @@ func TestService_BeforeStopAfterStop_Hooks(t *testing.T) {
 func TestService_AfterStartFinished_Hook(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		called := false
-		svc := NewService(
-			WithServiceName("after-finished"),
-			WithStart(func(_ context.Context) error { return nil }),
-			WithStop(noopStop),
-			WithServiceAfterStartFinished(func() error {
+		svc := launcher.NewService(
+			launcher.WithServiceName("after-finished"),
+			launcher.WithStart(func(_ context.Context) error { return nil }),
+			launcher.WithStop(noopStop),
+			launcher.WithServiceAfterStartFinished(func() error {
 				called = true
 				return nil
 			}),
@@ -269,15 +270,15 @@ func TestService_StartupTimeout(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		svc := NewService(
-			WithServiceName("slow-start"),
-			WithStart(func(ctx context.Context) error {
+		svc := launcher.NewService(
+			launcher.WithServiceName("slow-start"),
+			launcher.WithStart(func(ctx context.Context) error {
 				// Never finishes on its own — only stops via context cancel
 				<-ctx.Done()
 				return nil
 			}),
-			WithStop(noopStop),
-			WithStartupTimeout(5*time.Second),
+			launcher.WithStop(noopStop),
+			launcher.WithStartupTimeout(5*time.Second),
 		)
 		svc.Options().Context = ctx
 
@@ -290,7 +291,7 @@ func TestService_StartupTimeout(t *testing.T) {
 		if err == nil {
 			t.Fatal("expected startup timeout error")
 		}
-		if svc.State() != ServiceStateFailed {
+		if svc.State() != launcher.ServiceStateFailed {
 			t.Fatalf("state = %v; want failed", svc.State())
 		}
 	})
@@ -300,14 +301,14 @@ func TestService_StartupTimeout(t *testing.T) {
 
 func TestService_ShutdownTimeout(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		svc := NewService(
-			WithServiceName("slow-stop"),
-			WithStart(blockingStart),
-			WithStop(func(ctx context.Context) error {
+		svc := launcher.NewService(
+			launcher.WithServiceName("slow-stop"),
+			launcher.WithStart(blockingStart),
+			launcher.WithStop(func(ctx context.Context) error {
 				<-ctx.Done()
 				return nil
 			}),
-			WithShutdownTimeout(3*time.Second),
+			launcher.WithShutdownTimeout(3*time.Second),
 		)
 
 		ctx, cancel := context.WithCancel(context.Background())
@@ -322,7 +323,7 @@ func TestService_ShutdownTimeout(t *testing.T) {
 		if err := svc.Stop(); err != nil {
 			t.Fatalf("Stop error: %v", err)
 		}
-		if svc.State() != ServiceStateStopped {
+		if svc.State() != launcher.ServiceStateStopped {
 			t.Fatalf("state = %v; want stopped", svc.State())
 		}
 	})
@@ -337,9 +338,9 @@ func TestService_RestartOnFailure(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		svc := NewService(
-			WithServiceName("restart-fail"),
-			WithStart(func(ctx context.Context) error {
+		svc := launcher.NewService(
+			launcher.WithServiceName("restart-fail"),
+			launcher.WithStart(func(ctx context.Context) error {
 				n := attempts.Add(1)
 				if n <= 2 {
 					return errors.New("transient error")
@@ -347,9 +348,9 @@ func TestService_RestartOnFailure(t *testing.T) {
 				<-ctx.Done()
 				return nil
 			}),
-			WithStop(noopStop),
-			WithRestartPolicy(RestartPolicy{
-				Mode:     RestartOnFailure,
+			launcher.WithStop(noopStop),
+			launcher.WithRestartPolicy(launcher.RestartPolicy{
+				Mode:     launcher.RestartOnFailure,
 				Delay:    time.Second,
 				MaxDelay: 4 * time.Second,
 			}),
@@ -363,7 +364,7 @@ func TestService_RestartOnFailure(t *testing.T) {
 		time.Sleep(10 * time.Second)
 		synctest.Wait()
 
-		if svc.State() != ServiceStateRunning {
+		if svc.State() != launcher.ServiceStateRunning {
 			t.Fatalf("state = %v; want running", svc.State())
 		}
 		if attempts.Load() != 3 {
@@ -383,15 +384,15 @@ func TestService_RestartOnFailure_CleanExit_NoRestart(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		var attempts atomic.Int32
 
-		svc := NewService(
-			WithServiceName("restart-clean"),
-			WithStart(func(_ context.Context) error {
+		svc := launcher.NewService(
+			launcher.WithServiceName("restart-clean"),
+			launcher.WithStart(func(_ context.Context) error {
 				attempts.Add(1)
 				return nil
 			}),
-			WithStop(noopStop),
-			WithRestartPolicy(RestartPolicy{
-				Mode:  RestartOnFailure,
+			launcher.WithStop(noopStop),
+			launcher.WithRestartPolicy(launcher.RestartPolicy{
+				Mode:  launcher.RestartOnFailure,
 				Delay: time.Second,
 			}),
 		)
@@ -412,9 +413,9 @@ func TestService_RestartAlways(t *testing.T) {
 
 		ctx, cancel := context.WithCancel(context.Background())
 
-		svc := NewService(
-			WithServiceName("restart-always"),
-			WithStart(func(ctx context.Context) error {
+		svc := launcher.NewService(
+			launcher.WithServiceName("restart-always"),
+			launcher.WithStart(func(ctx context.Context) error {
 				n := attempts.Add(1)
 				if n < 3 {
 					return nil
@@ -422,9 +423,9 @@ func TestService_RestartAlways(t *testing.T) {
 				<-ctx.Done()
 				return nil
 			}),
-			WithStop(noopStop),
-			WithRestartPolicy(RestartPolicy{
-				Mode:  RestartAlways,
+			launcher.WithStop(noopStop),
+			launcher.WithRestartPolicy(launcher.RestartPolicy{
+				Mode:  launcher.RestartAlways,
 				Delay: time.Second,
 			}),
 		)
@@ -452,15 +453,15 @@ func TestService_RestartMaxRetries(t *testing.T) {
 		var attempts atomic.Int32
 		failErr := errors.New("always fail")
 
-		svc := NewService(
-			WithServiceName("max-retries"),
-			WithStart(func(_ context.Context) error {
+		svc := launcher.NewService(
+			launcher.WithServiceName("max-retries"),
+			launcher.WithStart(func(_ context.Context) error {
 				attempts.Add(1)
 				return failErr
 			}),
-			WithStop(noopStop),
-			WithRestartPolicy(RestartPolicy{
-				Mode:       RestartOnFailure,
+			launcher.WithStop(noopStop),
+			launcher.WithRestartPolicy(launcher.RestartPolicy{
+				Mode:       launcher.RestartOnFailure,
 				MaxRetries: 3,
 				Delay:      time.Second,
 			}),
@@ -475,7 +476,7 @@ func TestService_RestartMaxRetries(t *testing.T) {
 		if attempts.Load() != 4 {
 			t.Fatalf("attempts = %d; want 4", attempts.Load())
 		}
-		if svc.State() != ServiceStateFailed {
+		if svc.State() != launcher.ServiceStateFailed {
 			t.Fatalf("state = %v; want failed", svc.State())
 		}
 	})
@@ -487,9 +488,9 @@ func TestService_RestartBackoff_ExponentialDelay(t *testing.T) {
 
 		ctx, cancel := context.WithCancel(context.Background())
 
-		svc := NewService(
-			WithServiceName("backoff"),
-			WithStart(func(ctx context.Context) error {
+		svc := launcher.NewService(
+			launcher.WithServiceName("backoff"),
+			launcher.WithStart(func(ctx context.Context) error {
 				timestamps = append(timestamps, time.Now())
 				if len(timestamps) < 4 {
 					return errors.New("fail")
@@ -497,9 +498,9 @@ func TestService_RestartBackoff_ExponentialDelay(t *testing.T) {
 				<-ctx.Done()
 				return nil
 			}),
-			WithStop(noopStop),
-			WithRestartPolicy(RestartPolicy{
-				Mode:     RestartOnFailure,
+			launcher.WithStop(noopStop),
+			launcher.WithRestartPolicy(launcher.RestartPolicy{
+				Mode:     launcher.RestartOnFailure,
 				Delay:    time.Second,
 				MaxDelay: 10 * time.Second,
 			}),
@@ -544,10 +545,10 @@ func TestLauncher_RunStop(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		ln := newTestLauncher()
 
-		svc := NewService(
-			WithServiceName("svc"),
-			WithStart(blockingStart),
-			WithStop(noopStop),
+		svc := launcher.NewService(
+			launcher.WithServiceName("svc"),
+			launcher.WithStart(blockingStart),
+			launcher.WithStop(noopStop),
 		)
 		ln.ServicesRunner().Register(svc)
 
@@ -556,7 +557,7 @@ func TestLauncher_RunStop(t *testing.T) {
 
 		synctest.Wait()
 
-		if svc.State() != ServiceStateRunning {
+		if svc.State() != launcher.ServiceStateRunning {
 			t.Fatalf("state = %v; want running", svc.State())
 		}
 
@@ -593,10 +594,10 @@ func TestLauncher_ServiceError_Propagates(t *testing.T) {
 		ln := newTestLauncher()
 
 		ln.ServicesRunner().Register(
-			NewService(
-				WithServiceName("crasher"),
-				WithStart(func(_ context.Context) error { return svcErr }),
-				WithStop(noopStop),
+			launcher.NewService(
+				launcher.WithServiceName("crasher"),
+				launcher.WithStart(func(_ context.Context) error { return svcErr }),
+				launcher.WithStop(noopStop),
 			),
 		)
 
@@ -613,14 +614,14 @@ func TestLauncher_ServiceError_Propagates(t *testing.T) {
 func TestLauncher_BeforeStartHook_Error(t *testing.T) {
 	hookErr := errors.New("before start hook failed")
 	ln := newTestLauncher(
-		WithBeforeStart(func() error { return hookErr }),
+		launcher.WithBeforeStart(func() error { return hookErr }),
 	)
 
 	ln.ServicesRunner().Register(
-		NewService(
-			WithServiceName("svc"),
-			WithStart(blockingStart),
-			WithStop(noopStop),
+		launcher.NewService(
+			launcher.WithServiceName("svc"),
+			launcher.WithStart(blockingStart),
+			launcher.WithStop(noopStop),
 		),
 	)
 
@@ -634,14 +635,14 @@ func TestLauncher_AfterStartHook_Error(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		hookErr := errors.New("after start hook failed")
 		ln := newTestLauncher(
-			WithAfterStart(func() error { return hookErr }),
+			launcher.WithAfterStart(func() error { return hookErr }),
 		)
 
 		ln.ServicesRunner().Register(
-			NewService(
-				WithServiceName("svc"),
-				WithStart(blockingStart),
-				WithStop(noopStop),
+			launcher.NewService(
+				launcher.WithServiceName("svc"),
+				launcher.WithStart(blockingStart),
+				launcher.WithStop(noopStop),
 			),
 		)
 
@@ -664,15 +665,15 @@ func TestLauncher_BeforeStopAfterStop_Hooks(t *testing.T) {
 		}
 
 		ln := newTestLauncher(
-			WithBeforeStop(func() error { appendOrder("before-stop"); return nil }),
-			WithAfterStop(func() error { appendOrder("after-stop"); return nil }),
+			launcher.WithBeforeStop(func() error { appendOrder("before-stop"); return nil }),
+			launcher.WithAfterStop(func() error { appendOrder("after-stop"); return nil }),
 		)
 
 		ln.ServicesRunner().Register(
-			NewService(
-				WithServiceName("svc"),
-				WithStart(blockingStart),
-				WithStop(noopStop),
+			launcher.NewService(
+				launcher.WithServiceName("svc"),
+				launcher.WithStart(blockingStart),
+				launcher.WithStop(noopStop),
 			),
 		)
 
@@ -709,10 +710,10 @@ func TestLauncher_AddHooksAfterCreation(t *testing.T) {
 		ln.AddBeforeStartHooks(nil)
 
 		ln.ServicesRunner().Register(
-			NewService(
-				WithServiceName("svc"),
-				WithStart(blockingStart),
-				WithStop(noopStop),
+			launcher.NewService(
+				launcher.WithServiceName("svc"),
+				launcher.WithStart(blockingStart),
+				launcher.WithStop(noopStop),
 			),
 		)
 
@@ -739,13 +740,13 @@ func TestLauncher_AddHooksAfterCreation(t *testing.T) {
 func TestLauncher_ContextCancel_StopsLauncher(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
-		ln := newTestLauncher(WithContext(ctx))
+		ln := newTestLauncher(launcher.WithContext(ctx))
 
 		ln.ServicesRunner().Register(
-			NewService(
-				WithServiceName("svc"),
-				WithStart(blockingStart),
-				WithStop(noopStop),
+			launcher.NewService(
+				launcher.WithServiceName("svc"),
+				launcher.WithStart(blockingStart),
+				launcher.WithStop(noopStop),
 			),
 		)
 
@@ -770,16 +771,16 @@ func TestLauncher_StopSequence_Fifo(t *testing.T) {
 		var mu sync.Mutex
 
 		ln := newTestLauncher(
-			WithRunnerServicesSequence(RunnerServicesSequenceFifo),
+			launcher.WithRunnerServicesSequence(launcher.RunnerServicesSequenceFifo),
 		)
 
 		for _, name := range []string{"a", "b", "c"} {
 			n := name
 			ln.ServicesRunner().Register(
-				NewService(
-					WithServiceName(n),
-					WithStart(blockingStart),
-					WithStop(func(_ context.Context) error {
+				launcher.NewService(
+					launcher.WithServiceName(n),
+					launcher.WithStart(blockingStart),
+					launcher.WithStop(func(_ context.Context) error {
 						mu.Lock()
 						order = append(order, n)
 						mu.Unlock()
@@ -812,16 +813,16 @@ func TestLauncher_StopSequence_Lifo(t *testing.T) {
 		var mu sync.Mutex
 
 		ln := newTestLauncher(
-			WithRunnerServicesSequence(RunnerServicesSequenceLifo),
+			launcher.WithRunnerServicesSequence(launcher.RunnerServicesSequenceLifo),
 		)
 
 		for _, name := range []string{"a", "b", "c"} {
 			n := name
 			ln.ServicesRunner().Register(
-				NewService(
-					WithServiceName(n),
-					WithStart(blockingStart),
-					WithStop(func(_ context.Context) error {
+				launcher.NewService(
+					launcher.WithServiceName(n),
+					launcher.WithStart(blockingStart),
+					launcher.WithStop(func(_ context.Context) error {
 						mu.Lock()
 						order = append(order, n)
 						mu.Unlock()
@@ -853,15 +854,15 @@ func TestLauncher_StopSequence_None_Parallel(t *testing.T) {
 		var stopCount atomic.Int32
 
 		ln := newTestLauncher(
-			WithRunnerServicesSequence(RunnerServicesSequenceNone),
+			launcher.WithRunnerServicesSequence(launcher.RunnerServicesSequenceNone),
 		)
 
 		for _, name := range []string{"a", "b", "c"} {
 			ln.ServicesRunner().Register(
-				NewService(
-					WithServiceName(name),
-					WithStart(blockingStart),
-					WithStop(func(_ context.Context) error {
+				launcher.NewService(
+					launcher.WithServiceName(name),
+					launcher.WithStart(blockingStart),
+					launcher.WithStop(func(_ context.Context) error {
 						stopCount.Add(1)
 						return nil
 					}),
@@ -900,42 +901,42 @@ func TestLauncher_StartupPriority_GroupOrder(t *testing.T) {
 
 		// Priority 2
 		ln.ServicesRunner().Register(
-			NewService(
-				WithServiceName("broker"),
-				WithStartupPriority(2),
-				WithStart(func(ctx context.Context) error {
+			launcher.NewService(
+				launcher.WithServiceName("broker"),
+				launcher.WithStartupPriority(2),
+				launcher.WithStart(func(ctx context.Context) error {
 					appendOrder("broker-started")
 					<-ctx.Done()
 					return nil
 				}),
-				WithStop(noopStop),
+				launcher.WithStop(noopStop),
 			),
 		)
 
 		// Priority 1
 		ln.ServicesRunner().Register(
-			NewService(
-				WithServiceName("db"),
-				WithStartupPriority(1),
-				WithStart(func(ctx context.Context) error {
+			launcher.NewService(
+				launcher.WithServiceName("db"),
+				launcher.WithStartupPriority(1),
+				launcher.WithStart(func(ctx context.Context) error {
 					appendOrder("db-started")
 					<-ctx.Done()
 					return nil
 				}),
-				WithStop(noopStop),
+				launcher.WithStop(noopStop),
 			),
 		)
 
 		// Priority 0 (default)
 		ln.ServicesRunner().Register(
-			NewService(
-				WithServiceName("http"),
-				WithStart(func(ctx context.Context) error {
+			launcher.NewService(
+				launcher.WithServiceName("http"),
+				launcher.WithStart(func(ctx context.Context) error {
 					appendOrder("http-started")
 					<-ctx.Done()
 					return nil
 				}),
-				WithStop(noopStop),
+				launcher.WithStop(noopStop),
 			),
 		)
 
@@ -975,18 +976,18 @@ func TestLauncher_StartupPriority_SameGroup_Concurrent(t *testing.T) {
 
 		ln := newTestLauncher()
 
-		makeSvc := func(name string) *Service {
-			return NewService(
-				WithServiceName(name),
-				WithStartupPriority(1),
-				WithStart(func(ctx context.Context) error {
+		makeSvc := func(name string) *launcher.Service {
+			return launcher.NewService(
+				launcher.WithServiceName(name),
+				launcher.WithStartupPriority(1),
+				launcher.WithStart(func(ctx context.Context) error {
 					if readyCount.Add(1) == 2 {
 						close(bothReady)
 					}
 					<-ctx.Done()
 					return nil
 				}),
-				WithStop(noopStop),
+				launcher.WithStop(noopStop),
 			)
 		}
 
@@ -994,14 +995,14 @@ func TestLauncher_StartupPriority_SameGroup_Concurrent(t *testing.T) {
 
 		var p0Started atomic.Bool
 		ln.ServicesRunner().Register(
-			NewService(
-				WithServiceName("app"),
-				WithStart(func(ctx context.Context) error {
+			launcher.NewService(
+				launcher.WithServiceName("app"),
+				launcher.WithStart(func(ctx context.Context) error {
 					p0Started.Store(true)
 					<-ctx.Done()
 					return nil
 				}),
-				WithStop(noopStop),
+				launcher.WithStop(noopStop),
 			),
 		)
 
@@ -1036,24 +1037,24 @@ func TestLauncher_StartupPriority_GroupFailure_AbortsNext(t *testing.T) {
 		ln := newTestLauncher()
 
 		ln.ServicesRunner().Register(
-			NewService(
-				WithServiceName("db"),
-				WithStartupPriority(1),
-				WithStart(func(_ context.Context) error { return svcErr }),
-				WithStop(noopStop),
+			launcher.NewService(
+				launcher.WithServiceName("db"),
+				launcher.WithStartupPriority(1),
+				launcher.WithStart(func(_ context.Context) error { return svcErr }),
+				launcher.WithStop(noopStop),
 			),
 		)
 
 		ln.ServicesRunner().Register(
-			NewService(
-				WithServiceName("broker"),
-				WithStartupPriority(2),
-				WithStart(func(ctx context.Context) error {
+			launcher.NewService(
+				launcher.WithServiceName("broker"),
+				launcher.WithStartupPriority(2),
+				launcher.WithStart(func(ctx context.Context) error {
 					p2Started.Store(true)
 					<-ctx.Done()
 					return nil
 				}),
-				WithStop(noopStop),
+				launcher.WithStop(noopStop),
 			),
 		)
 
@@ -1080,16 +1081,16 @@ func TestLauncher_StartupPriority_AllDefault_Concurrent(t *testing.T) {
 
 		for i := range n {
 			ln.ServicesRunner().Register(
-				NewService(
-					WithServiceName(fmt.Sprintf("svc-%d", i)),
-					WithStart(func(ctx context.Context) error {
+				launcher.NewService(
+					launcher.WithServiceName(fmt.Sprintf("svc-%d", i)),
+					launcher.WithStart(func(ctx context.Context) error {
 						if startCount.Add(1) == n {
 							close(allStarted)
 						}
 						<-ctx.Done()
 						return nil
 					}),
-					WithStop(noopStop),
+					launcher.WithStop(noopStop),
 				),
 			)
 		}
@@ -1117,16 +1118,16 @@ func TestLauncher_StartupPriority_MultipleGroups(t *testing.T) {
 
 		ln := newTestLauncher()
 
-		makeGroupSvc := func(name string, priority int, seqDst *int64) *Service {
-			return NewService(
-				WithServiceName(name),
-				WithStartupPriority(priority),
-				WithStart(func(ctx context.Context) error {
+		makeGroupSvc := func(name string, priority int, seqDst *int64) *launcher.Service {
+			return launcher.NewService(
+				launcher.WithServiceName(name),
+				launcher.WithStartupPriority(priority),
+				launcher.WithStart(func(ctx context.Context) error {
 					*seqDst = seq.Add(1)
 					<-ctx.Done()
 					return nil
 				}),
-				WithStop(noopStop),
+				launcher.WithStop(noopStop),
 			)
 		}
 
@@ -1157,10 +1158,10 @@ func TestLauncher_StartupPriority_MultipleGroups(t *testing.T) {
 func TestServicesRunner_Get(t *testing.T) {
 	ln := newTestLauncher()
 
-	svc := NewService(
-		WithServiceName("findme"),
-		WithStart(blockingStart),
-		WithStop(noopStop),
+	svc := launcher.NewService(
+		launcher.WithServiceName("findme"),
+		launcher.WithStart(blockingStart),
+		launcher.WithStop(noopStop),
 	)
 	ln.ServicesRunner().Register(svc)
 
@@ -1191,11 +1192,11 @@ func TestServicesRunner_DisabledService_Skipped(t *testing.T) {
 	ln := newTestLauncher()
 
 	ln.ServicesRunner().Register(
-		NewService(
-			WithServiceName("disabled"),
-			WithStart(blockingStart),
-			WithStop(noopStop),
-			WithEnabled(false),
+		launcher.NewService(
+			launcher.WithServiceName("disabled"),
+			launcher.WithStart(blockingStart),
+			launcher.WithStop(noopStop),
+			launcher.WithEnabled(false),
 		),
 	)
 
@@ -1213,18 +1214,18 @@ func TestLauncher_MultipleServices_OneFailsAfterStart(t *testing.T) {
 		ln := newTestLauncher()
 
 		ln.ServicesRunner().Register(
-			NewService(
-				WithServiceName("a"),
-				WithStart(blockingStart),
-				WithStop(noopStop),
+			launcher.NewService(
+				launcher.WithServiceName("a"),
+				launcher.WithStart(blockingStart),
+				launcher.WithStop(noopStop),
 			),
-			NewService(
-				WithServiceName("b"),
-				WithStart(func(ctx context.Context) error {
+			launcher.NewService(
+				launcher.WithServiceName("b"),
+				launcher.WithStart(func(ctx context.Context) error {
 					time.Sleep(time.Second)
 					return svcErr
 				}),
-				WithStop(noopStop),
+				launcher.WithStop(noopStop),
 			),
 		)
 
@@ -1244,14 +1245,14 @@ func TestLauncher_BeforeStopHook_Error(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		hookErr := errors.New("before stop failed")
 		ln := newTestLauncher(
-			WithBeforeStop(func() error { return hookErr }),
+			launcher.WithBeforeStop(func() error { return hookErr }),
 		)
 
 		ln.ServicesRunner().Register(
-			NewService(
-				WithServiceName("svc"),
-				WithStart(blockingStart),
-				WithStop(noopStop),
+			launcher.NewService(
+				launcher.WithServiceName("svc"),
+				launcher.WithStart(blockingStart),
+				launcher.WithStop(noopStop),
 			),
 		)
 
@@ -1273,14 +1274,14 @@ func TestLauncher_AfterStopHook_Error(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		hookErr := errors.New("after stop failed")
 		ln := newTestLauncher(
-			WithAfterStop(func() error { return hookErr }),
+			launcher.WithAfterStop(func() error { return hookErr }),
 		)
 
 		ln.ServicesRunner().Register(
-			NewService(
-				WithServiceName("svc"),
-				WithStart(blockingStart),
-				WithStop(noopStop),
+			launcher.NewService(
+				launcher.WithServiceName("svc"),
+				launcher.WithStart(blockingStart),
+				launcher.WithStop(noopStop),
 			),
 		)
 
@@ -1305,10 +1306,10 @@ func TestService_StopError_Propagates(t *testing.T) {
 		stopErr := errors.New("stop failed")
 		ctx, cancel := context.WithCancel(context.Background())
 
-		svc := NewService(
-			WithServiceName("stop-err"),
-			WithStart(blockingStart),
-			WithStop(func(_ context.Context) error { return stopErr }),
+		svc := launcher.NewService(
+			launcher.WithServiceName("stop-err"),
+			launcher.WithStart(blockingStart),
+			launcher.WithStop(func(_ context.Context) error { return stopErr }),
 		)
 		svc.Options().Context = ctx
 
@@ -1322,7 +1323,7 @@ func TestService_StopError_Propagates(t *testing.T) {
 		if !errors.Is(err, stopErr) {
 			t.Fatalf("Stop error = %v; want %v", err, stopErr)
 		}
-		if svc.State() != ServiceStateFailed {
+		if svc.State() != launcher.ServiceStateFailed {
 			t.Fatalf("state = %v; want failed", svc.State())
 		}
 	})
@@ -1332,10 +1333,10 @@ func TestService_StopError_Propagates(t *testing.T) {
 
 func TestService_ReadyCh_ClosedOnStartError(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		svc := NewService(
-			WithServiceName("fail-start"),
-			WithStart(func(_ context.Context) error { return errors.New("boom") }),
-			WithStop(noopStop),
+		svc := launcher.NewService(
+			launcher.WithServiceName("fail-start"),
+			launcher.WithStart(func(_ context.Context) error { return errors.New("boom") }),
+			launcher.WithStop(noopStop),
 		)
 		svc.Options().Context = context.Background()
 
@@ -1357,8 +1358,12 @@ type testIService struct {
 	stopped atomic.Bool
 }
 
-func (s *testIService) Name() string                    { return s.name }
-func (s *testIService) Start(ctx context.Context) error { s.started.Store(true); <-ctx.Done(); return nil }
+func (s *testIService) Name() string { return s.name }
+func (s *testIService) Start(ctx context.Context) error {
+	s.started.Store(true)
+	<-ctx.Done()
+	return nil
+}
 func (s *testIService) Stop(_ context.Context) error    { s.stopped.Store(true); return nil }
 func (s *testIService) Enabled() bool                   { return true }
 func (s *testIService) Interval() time.Duration         { return time.Second }
@@ -1368,7 +1373,7 @@ func TestService_WithServiceWrapper(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		impl := &testIService{name: "wrapped"}
 
-		svc := NewService(WithService(impl))
+		svc := launcher.NewService(launcher.WithService(impl))
 
 		if svc.Name() != "wrapped" {
 			t.Fatalf("name = %q; want wrapped", svc.Name())
@@ -1409,15 +1414,15 @@ func TestLauncher_Context(t *testing.T) {
 func TestLauncher_AppStartStopLog(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		ln := newTestLauncher(
-			WithName("test-app"),
-			WithAppStartStopLog(true),
+			launcher.WithName("test-app"),
+			launcher.WithAppStartStopLog(true),
 		)
 
 		ln.ServicesRunner().Register(
-			NewService(
-				WithServiceName("svc"),
-				WithStart(blockingStart),
-				WithStop(noopStop),
+			launcher.NewService(
+				launcher.WithServiceName("svc"),
+				launcher.WithStart(blockingStart),
+				launcher.WithStop(noopStop),
 			),
 		)
 
