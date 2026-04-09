@@ -122,6 +122,20 @@ func main() {
 | `WithBeforeStop(func() error)`             | Hook before services stop                             |
 | `WithAfterStop(func() error)`              | Hook after services stop                              |
 
+### Service Options Reference
+
+| Option                               | Description                                                                        |
+| ------------------------------------ | ---------------------------------------------------------------------------------- |
+| `WithServiceName(string)`            | Service name used in logs and health checks                                        |
+| `WithStart(func(ctx) error)`         | Start function (must block)                                                        |
+| `WithStop(func(ctx) error)`          | Stop function                                                                      |
+| `WithEnabled(bool)`                  | Enable/disable service                                                             |
+| `WithService(any)`                   | Wrap struct implementing Name/Start/Stop                                           |
+| `WithStartupPriority(int)`           | Startup priority (0 = concurrent last, >0 = grouped sequential in ascending order) |
+| `WithShutdownTimeout(time.Duration)` | Max time for Stop to complete (default 10s)                                        |
+| `WithStartupTimeout(time.Duration)`  | Max time for Start to signal ready (0 = no limit)                                  |
+| `WithRestartPolicy(RestartPolicy)`   | Automatic restart on failure or always                                             |
+
 ## Programmatic Stop
 
 You can stop the launcher from code:

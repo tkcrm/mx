@@ -79,7 +79,7 @@ Launcher
 
 1. Register ops services (if `OpsConfig.Enabled`)
 2. Run `BeforeStart` hooks sequentially
-3. Start all services in parallel goroutines
+3. Start services by priority groups: each group starts concurrently, groups run sequentially in ascending priority order. Priority 0 (default) starts last.
 4. Run `AfterStart` hooks sequentially
 5. Wait for: service error, OS signal, or context cancellation
 6. On first signal: cancel context, log graceful shutdown message
@@ -103,6 +103,7 @@ Launcher
 - `ShutdownTimeout` (default 10s) — max time for Stop to complete
 - `StartupTimeout` — max time for Start to signal (0 = no timeout)
 - `RestartPolicy` — automatic restart on failure or always
+- `StartupPriority` — group-based startup ordering (same priority = concurrent, groups sequential)
 
 ### Restart Policies
 
