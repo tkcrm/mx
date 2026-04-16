@@ -1,7 +1,7 @@
 ---
 name: mx
 description: Guides building Go microservices with the MX framework — service lifecycle, transports (HTTP/gRPC/ConnectRPC), health checks, logging, and ops.
-user-invocable: false
+user-invocable: true
 ---
 
 # MX Microservices Framework
