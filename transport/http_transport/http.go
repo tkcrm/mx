@@ -52,7 +52,8 @@ func (s *HTTPServer) Start(ctx context.Context) error {
 		"network", s.Network,
 	)
 
-	log.Infof("prepare listener %s on %s / %s",
+	log.Infof(
+		"prepare listener %s on %s / %s",
 		s.name, s.Address, s.Network,
 	)
 

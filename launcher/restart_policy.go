@@ -42,7 +42,7 @@ func (p RestartPolicy) nextDelay(attempt int) (time.Duration, bool) {
 	}
 
 	// exponential backoff: delay * 2^attempt
-	for i := 0; i < attempt; i++ {
+	for range attempt {
 		delay *= 2
 		if p.MaxDelay > 0 && delay > p.MaxDelay {
 			delay = p.MaxDelay

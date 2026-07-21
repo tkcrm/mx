@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tkcrm/mx/launcher/types"
+	"github.com/tkcrm/mx/mxtypes"
 )
 
 var (
@@ -79,6 +79,6 @@ func (p *PingPong) Interval() time.Duration { return time.Second }
 func (p *PingPong) Healthy(_ context.Context) error { return nil }
 
 var (
-	_ types.IService      = (*PingPong)(nil)
-	_ types.HealthChecker = (*PingPong)(nil)
+	_ mxtypes.IService      = (*PingPong)(nil)
+	_ mxtypes.HealthChecker = (*PingPong)(nil)
 )

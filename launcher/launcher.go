@@ -101,13 +101,11 @@ func (l *launcher) Run() error { //nolint:cyclop
 	graceWait := new(sync.WaitGroup)
 
 	startSvc := func(svc *Service) {
-		graceWait.Add(1)
-		go func() {
-			defer graceWait.Done()
+		graceWait.Go(func() {
 			if err := svc.Start(); err != nil {
 				errChan <- fmt.Errorf("failed to start service [%s]: %w", svc.Name(), err)
 			}
-		}()
+		})
 	}
 
 	// start priority groups sequentially; within each group — concurrently
@@ -181,14 +179,14 @@ func (l *launcher) Run() error { //nolint:cyclop
 	// wait on kill signal
 	case <-ch:
 		l.cancelFn()
-		l.opts.logger.Warnln("graceful shutdown started, send signal again to force exit")
+		l.opts.logger.Infoln("graceful shutdown started, send signal again to force exit")
 		if l.opts.Signal {
 			var forceCtx context.Context
 			forceCtx, forceExitCancel = context.WithCancel(context.Background())
 			go func() {
 				select {
 				case <-ch:
-					l.opts.logger.Warnln("received second signal, forcing exit")
+					l.opts.logger.Infoln("received second signal, forcing exit")
 					os.Exit(1)
 				case <-forceCtx.Done():
 				}
@@ -217,7 +215,7 @@ func (l *launcher) Run() error { //nolint:cyclop
 	go func() {
 		<-stopCtx.Done()
 		if stopCtx.Err() == context.DeadlineExceeded {
-			l.opts.logger.Warnln("global shutdown timeout exceeded, forcing exit")
+			l.opts.logger.Infoln("global shutdown timeout exceeded, forcing exit")
 			os.Exit(1)
 		}
 	}()
@@ -246,10 +244,9 @@ func (l *launcher) Run() error { //nolint:cyclop
 				})
 			}
 
-			// wait stop group
-			if err := g.Wait(); err != nil {
-				l.opts.logger.Errorf("failed to stop services: %s", err)
-			}
+			// wait for all stop goroutines to finish; per-service errors are
+			// already logged above, so Wait never reports one.
+			_ = g.Wait()
 		}
 	case RunnerServicesSequenceFifo:
 		{

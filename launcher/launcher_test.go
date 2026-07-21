@@ -266,18 +266,24 @@ func TestService_AfterStartFinished_Hook(t *testing.T) {
 // --- Startup timeout ---
 
 func TestService_StartupTimeout(t *testing.T) {
+	// A service that reports readiness but never becomes ready must fail once
+	// StartupTimeout elapses. (Services that do NOT report readiness are ready
+	// immediately, so the timeout never applies to them — see
+	// TestService_StartupTimeout_ReadyService_NotKilled.)
 	synctest.Test(t, func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
+		neverReady := make(chan struct{}) // intentionally never closed
+
 		svc := launcher.NewService(
 			launcher.WithServiceName("slow-start"),
 			launcher.WithStart(func(ctx context.Context) error {
-				// Never finishes on its own — only stops via context cancel
 				<-ctx.Done()
 				return nil
 			}),
 			launcher.WithStop(noopStop),
+			launcher.WithReadiness(neverReady),
 			launcher.WithStartupTimeout(5*time.Second),
 		)
 		svc.Options().Context = ctx
@@ -285,6 +291,8 @@ func TestService_StartupTimeout(t *testing.T) {
 		errCh := make(chan error, 1)
 		go func() { errCh <- svc.Start() }()
 
+		// Advance fake time past the startup timeout.
+		time.Sleep(6 * time.Second)
 		synctest.Wait()
 
 		err := <-errCh

@@ -5,8 +5,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/tkcrm/mx/launcher/types"
 	"github.com/tkcrm/mx/logger"
+	"github.com/tkcrm/mx/mxtypes"
 )
 
 const defaultServiceName = "unknown"
@@ -17,7 +17,7 @@ type ServiceOptions struct {
 
 	Name          string
 	Enabled       bool
-	HealthChecker types.HealthChecker
+	HealthChecker mxtypes.HealthChecker
 
 	StartFn func(ctx context.Context) error
 	StopFn  func(ctx context.Context) error
@@ -34,8 +34,19 @@ type ServiceOptions struct {
 	// ShutdownTimeout is the maximum time to wait for Stop to complete. Default 10 seconds.
 	ShutdownTimeout time.Duration
 
-	// StartupTimeout is the maximum time to wait for the StartFn goroutine to signal an error
-	// after launch. Zero means no per-service startup timeout (the service runs until context cancel).
+	// Readiness, when non-nil, returns a channel that is closed once the service
+	// has finished starting up and is operational. The launcher keeps the service
+	// in the Starting state until it closes, gates startup-priority groups on it,
+	// and bounds the wait for it with StartupTimeout. Nil means the service is
+	// considered ready as soon as its Start goroutine is launched.
+	Readiness func() <-chan struct{}
+
+	// StartupTimeout is the maximum time to wait for a service that reports
+	// readiness (see Readiness) to become ready. A service that does not report
+	// ready within this duration is marked failed; a service that reports ready
+	// is never killed by this timeout, however long it subsequently runs.
+	// Zero means no startup timeout. It has no effect on services that do not
+	// report readiness — they are ready immediately.
 	StartupTimeout time.Duration
 
 	// RestartPolicy defines how the service behaves after an unexpected exit.
@@ -132,10 +143,24 @@ func WithShutdownTimeout(v time.Duration) ServiceOption {
 	return func(o *ServiceOptions) { o.ShutdownTimeout = v }
 }
 
-// WithStartupTimeout sets the maximum time the service's StartFn is allowed to
-// run before being considered failed. Zero (default) means no startup timeout.
+// WithStartupTimeout sets the maximum time to wait for a service that reports
+// readiness to become ready before it is considered failed. Zero (default)
+// means no startup timeout. It has no effect on services that do not report
+// readiness (see WithReadiness / mxtypes.ReadinessReporter).
 func WithStartupTimeout(v time.Duration) ServiceOption {
 	return func(o *ServiceOptions) { o.StartupTimeout = v }
+}
+
+// WithReadiness sets a readiness signal for the service. The returned channel
+// must be closed once the service is operational. The launcher keeps the
+// service in the Starting state until it closes, gates startup-priority groups
+// on it, and bounds the wait with StartupTimeout. Use this for inline services
+// defined via WithStart; struct services can instead implement
+// mxtypes.ReadinessReporter and be wrapped with WithService.
+func WithReadiness(ch <-chan struct{}) ServiceOption {
+	return func(o *ServiceOptions) {
+		o.Readiness = func() <-chan struct{} { return ch }
+	}
 }
 
 // WithRestartPolicy configures automatic restart behaviour after an unexpected exit.
@@ -166,12 +191,16 @@ func WithService(svc any) ServiceOption {
 			o.StopFn = impl.Stop
 		}
 
-		if impl, ok := svc.(types.Enabler); ok {
+		if impl, ok := svc.(mxtypes.Enabler); ok {
 			o.Enabled = impl.Enabled()
 		}
 
-		if impl, ok := svc.(types.HealthChecker); ok {
+		if impl, ok := svc.(mxtypes.HealthChecker); ok {
 			o.HealthChecker = impl
+		}
+
+		if impl, ok := svc.(mxtypes.ReadinessReporter); ok {
+			o.Readiness = impl.Ready
 		}
 	}
 }

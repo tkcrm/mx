@@ -8,7 +8,7 @@ MX is a composable Go microservices framework built around a central **Launcher*
 
 ### IService (required)
 
-Every service must implement this interface from `launcher/types`:
+Every service must implement this interface from `mxtypes`:
 
 ```go
 type IService interface {
@@ -79,7 +79,7 @@ Launcher
 
 1. Register ops services (if `OpsConfig.Enabled`)
 2. Run `BeforeStart` hooks sequentially
-3. Start services by priority groups: each group starts concurrently, groups run sequentially in ascending priority order. Priority 0 (default) starts last.
+3. Start services by priority groups: each group starts concurrently, and the next group waits until every service in the current one is **ready** (reported via `mxtypes.ReadinessReporter` / `WithReadiness`; services that don't report readiness are ready as soon as their `Start` goroutine launches). Groups run in ascending priority order. Priority 0 (default) starts last.
 4. Run `AfterStart` hooks sequentially
 5. Wait for: service error, OS signal, or context cancellation
 6. On first signal: cancel context, log graceful shutdown message
@@ -126,7 +126,7 @@ RestartAlways    // restart on any exit (error or clean)
 - `Name() string` → sets service name
 - `Start(ctx context.Context) error` → sets start function
 - `Stop(ctx context.Context) error` → sets stop function
-- `Enabled() bool` (types.Enabler) → sets enabled state
+- `Enabled() bool` (mxtypes.Enabler) → sets enabled state
 - `HealthChecker` interface → registers health checker
 
 This allows wrapping any struct without requiring explicit interface satisfaction at compile time.

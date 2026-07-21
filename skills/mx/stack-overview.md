@@ -16,7 +16,7 @@ Individual subpackages can be imported as needed:
 ```go
 import (
     "github.com/tkcrm/mx/launcher"
-    "github.com/tkcrm/mx/launcher/types"
+    "github.com/tkcrm/mx/mxtypes"
     "github.com/tkcrm/mx/logger"
     "github.com/tkcrm/mx/transport/http_transport"
     "github.com/tkcrm/mx/transport/grpc_transport"

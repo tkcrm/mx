@@ -11,19 +11,19 @@ mx/
 │   ├── services_runner.go             # IServicesRunner (Register, Get, Services)
 │   ├── options.go                     # Launcher Option functions
 │   ├── restart_policy.go              # RestartMode, RestartPolicy
-│   ├── types/                         # Core interfaces
-│   │   ├── types.go                   # IService, HealthChecker, Enabler, ServiceState
-│   │   └── health.go                  # Health check helpers
+│   ├── signal.go                      # OS signal set (SIGTERM, SIGINT, SIGQUIT)
 │   ├── ops/                           # Operational services
 │   │   ├── ops.go                     # Ops factory (New)
-│   │   ├── config.go                  # Config, HealthCheckerConfig, MetricsConfig
-│   │   ├── health.go                  # /healthy, /livez, /readyz handlers
-│   │   ├── metrics.go                 # Prometheus /metrics handler
-│   │   ├── profiler.go                # pprof /debug/pprof handler
+│   │   ├── config.go                  # Config (top-level ops config)
+│   │   ├── health.go                  # HealthCheckerConfig + /healthy, /livez, /readyz handlers
+│   │   ├── metrics.go                 # MetricsConfig + Prometheus /metrics handler
+│   │   ├── profiler.go                # ProfilerConfig + pprof /debug/pprof handler
 │   │   └── sentry/                    # Sentry error tracking integration
 │   └── services/
 │       └── pingpong/                  # Example ping-pong service
 │           └── ping_pong.go
+├── mxtypes/                           # Core interfaces (shared, at module root)
+│   └── types.go                       # IService, HealthChecker, Enabler, ReadinessReporter, StateProvider, ServiceState
 ├── logger/                            # Structured logging
 │   ├── logger.go                      # New, NewExtended, With, WithExtended
 │   ├── interface.go                   # Logger, ExtendedLogger interfaces
@@ -57,12 +57,10 @@ mx/
 │       ├── client.go                  # New[T] generic factory
 │       └── config.go                  # Config, Option
 └── util/                              # Utilities
-    ├── signal/                        # OS signal helpers (SIGTERM, SIGINT, SIGQUIT)
-    ├── structs/                       # Struct utilities
+    ├── structs/                       # Struct utilities (lookup)
     ├── files/                         # File utilities
     ├── json.go                        # JSON helpers
-    ├── locker.go                      # Locking primitives
-    └── slices.go                      # Slice utilities
+    └── timeit.go                      # Execution timing helper
 ```
 
 ## Typical Application Layout Using MX

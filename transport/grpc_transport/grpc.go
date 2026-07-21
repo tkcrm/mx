@@ -56,10 +56,12 @@ func NewServer(opts ...Option) *GRPCServer {
 
 		// add logger
 		if srv.LoggerEnabled {
-			unaryInterceptors = append(unaryInterceptors,
+			unaryInterceptors = append(
+				unaryInterceptors,
 				logging.UnaryServerInterceptor(InterceptorLogger(srv.logger)),
 			)
-			streamInterceptors = append(streamInterceptors,
+			streamInterceptors = append(
+				streamInterceptors,
 				logging.StreamServerInterceptor(InterceptorLogger(srv.logger)),
 			)
 		}
@@ -114,7 +116,8 @@ func (s *GRPCServer) Enabled() bool { return s.Config.Enabled }
 
 // Start allows starting gRPC server.
 func (s *GRPCServer) Start(ctx context.Context) error {
-	s.logger.Infof("prepare listener %s on %s / %s",
+	s.logger.Infof(
+		"prepare listener %s on %s / %s",
 		s.name, s.Addr, s.Network,
 	)
 
