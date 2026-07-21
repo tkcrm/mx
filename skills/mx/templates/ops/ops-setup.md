@@ -81,7 +81,7 @@ When all ops services share the same port (e.g., `10000`), a single HTTP server 
 
 ## How Health Checking Works
 
-1. Services implementing `lntypes.HealthChecker` are auto-detected when wrapped with `launcher.WithService()`
+1. Services implementing `mxtypes.HealthChecker` are auto-detected when wrapped with `launcher.WithService()`
 2. The ops health checker runs each service's `Healthy()` method on its configured `Interval()`
 3. Results are stored and served on the health endpoints
 

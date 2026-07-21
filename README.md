@@ -38,23 +38,24 @@ skills repo add tkcrm/mx
 
 ## Launcher capabilities
 
-| Capability                     | Option / Interface                                                     | Description                                                                                     |
-| ------------------------------ | ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| Lifecycle hooks                | `WithBeforeStart`, `WithAfterStart`, `WithBeforeStop`, `WithAfterStop` | Global hooks around app start/stop                                                              |
-| Service state machine          | `svc.State()`                                                          | Tracks each service: `idle → starting → running → stopping → stopped / failed`                  |
-| Service restart policy         | `WithRestartPolicy(RestartPolicy{...})`                                | `RestartOnFailure` / `RestartAlways` with exponential backoff                                   |
-| Startup timeout                | `WithStartupTimeout(d)`                                                | Fail the service if `StartFn` does not signal ready within `d`                                  |
-| Shutdown timeout (per service) | `WithShutdownTimeout(d)`                                               | Max time to wait for a service to stop                                                          |
-| Global shutdown timeout        | `WithGlobalShutdownTimeout(d)`                                         | Hard deadline for the entire graceful shutdown phase                                            |
-| Startup priority               | `WithStartupPriority(n)`                                               | Group-based startup ordering: same priority starts concurrently, groups run in ascending order  |
-| Stop sequence                  | `WithRunnerServicesSequence(...)`                                      | `None` (parallel) / `Fifo` / `Lifo`                                                             |
-| Service lookup                 | `ServicesRunner().Get(name)`                                           | Retrieve a registered service by name at runtime                                                |
-| Health checker                 | `types.HealthChecker` interface                                        | Periodic per-service health check, polled on a configurable interval                            |
-| Liveness probe                 | ops `/livez`                                                           | `200` healthy / `503` if any service is in `Failed` state                                       |
-| Readiness probe                | ops `/readyz`                                                          | `200` ready / `424` starting / `503` failed — combines `ServiceState` + `HealthChecker` results |
-| Legacy health endpoint         | ops `/healthy`                                                         | Backward-compatible endpoint (HealthChecker results only)                                       |
-| Metrics                        | ops `/metrics`                                                         | Prometheus metrics endpoint                                                                     |
-| Profiler                       | ops `/debug/pprof`                                                     | Go pprof profiler endpoint                                                                      |
+| Capability                     | Option / Interface                                                     | Description                                                                                       |
+| ------------------------------ | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Lifecycle hooks                | `WithBeforeStart`, `WithAfterStart`, `WithBeforeStop`, `WithAfterStop` | Global hooks around app start/stop                                                                |
+| Service state machine          | `svc.State()`                                                          | Tracks each service: `idle → starting → running → stopping → stopped / failed`                    |
+| Service restart policy         | `WithRestartPolicy(RestartPolicy{...})`                                | `RestartOnFailure` / `RestartAlways` with exponential backoff                                     |
+| Readiness signalling           | `ReadinessReporter` / `WithReadiness(ch)`                              | Service reports when it is operational; gates startup-priority groups and `WithStartupTimeout`    |
+| Startup timeout                | `WithStartupTimeout(d)`                                                | Fail a readiness-reporting service if it does not become ready within `d` (no effect otherwise)   |
+| Shutdown timeout (per service) | `WithShutdownTimeout(d)`                                               | Max time to wait for a service to stop                                                            |
+| Global shutdown timeout        | `WithGlobalShutdownTimeout(d)`                                         | Hard deadline for the entire graceful shutdown phase                                              |
+| Startup priority               | `WithStartupPriority(n)`                                               | Group-based startup ordering: same priority starts concurrently, groups run in ascending order    |
+| Stop sequence                  | `WithRunnerServicesSequence(...)`                                      | `None` (parallel) / `Fifo` / `Lifo`                                                               |
+| Service lookup                 | `ServicesRunner().Get(name)`                                           | Retrieve a registered service by name at runtime                                                  |
+| Health checker                 | `types.HealthChecker` interface                                        | Periodic per-service health check, polled on a configurable interval                              |
+| Liveness probe                 | ops `/livez`                                                           | `200` healthy / `503` if any service is in `Failed` state                                         |
+| Readiness probe                | ops `/readyz`                                                          | `200` ready / `424` starting / `503` failed — combines `ServiceState` + `HealthChecker` results   |
+| Legacy health endpoint         | ops `/healthy`                                                         | Backward-compatible endpoint (HealthChecker results only)                                         |
+| Metrics                        | ops `/metrics`                                                         | Prometheus metrics endpoint                                                                       |
+| Profiler                       | ops `/debug/pprof`                                                     | Go pprof profiler endpoint                                                                        |
 
 ## How to use
 
@@ -168,6 +169,8 @@ func main() {
 ### Startup priority
 
 Services can be assigned a startup priority to control initialization order. Services with the same priority start concurrently within a group. Groups are started sequentially in ascending priority order. Priority 0 (default) services start last, concurrently, after all prioritized groups are ready.
+
+"Ready" is reported by the service itself: implement `mxtypes.ReadinessReporter` (`Ready() <-chan struct{}`, close the channel once operational) or pass `WithReadiness(ch)`. A service that does not report readiness is considered ready as soon as its `Start` goroutine is launched — so a priority-1 database only truly blocks the next group if it reports readiness. `WithStartupTimeout(d)` bounds the wait for that signal.
 
 ```go
 ln.ServicesRunner().Register(

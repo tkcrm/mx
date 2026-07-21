@@ -1,6 +1,6 @@
 # ConnectRPC Server
 
-Sets up a ConnectRPC transport server using `connectrpc_transport.NewServer()`. ConnectRPC is an HTTP-based RPC framework compatible with gRPC. The server implements `lntypes.IService`.
+Sets up a ConnectRPC transport server using `connectrpc_transport.NewServer()`. ConnectRPC is an HTTP-based RPC framework compatible with gRPC. The server implements `mxtypes.IService`.
 
 ## ConnectRPCService Interface
 

@@ -1,6 +1,6 @@
 # Basic Service
 
-A minimal service implementing `lntypes.IService`. Place in `internal/services/{PACKAGE_NAME}/service.go`.
+A minimal service implementing `mxtypes.IService`. Place in `internal/services/{PACKAGE_NAME}/service.go`.
 
 ## service.go
 
@@ -10,7 +10,7 @@ package {PACKAGE_NAME}
 import (
 	"context"
 
-	"github.com/tkcrm/mx/launcher/lntypes"
+	"github.com/tkcrm/mx/mxtypes"
 	"github.com/tkcrm/mx/logger"
 )
 
@@ -42,7 +42,7 @@ func (s *{SERVICE_STRUCT}) Stop(_ context.Context) error {
 }
 
 // Compile-time check that {SERVICE_STRUCT} satisfies IService.
-var _ lntypes.IService = (*{SERVICE_STRUCT})(nil)
+var _ mxtypes.IService = (*{SERVICE_STRUCT})(nil)
 ```
 
 > Note: The `Start` function MUST block. If it returns immediately, the launcher treats the service as exited. Use `<-ctx.Done()` for long-running services, or run a server (HTTP/gRPC) that blocks until context cancellation.

@@ -12,8 +12,6 @@ mx/
 │   ├── options.go                     # Launcher Option functions
 │   ├── restart_policy.go              # RestartMode, RestartPolicy
 │   ├── signal.go                      # OS signal set (SIGTERM, SIGINT, SIGQUIT)
-│   ├── lntypes/                       # Core interfaces
-│   │   └── types.go                   # IService, HealthChecker, Enabler, StateProvider, ServiceState
 │   ├── ops/                           # Operational services
 │   │   ├── ops.go                     # Ops factory (New)
 │   │   ├── config.go                  # Config (top-level ops config)
@@ -24,6 +22,8 @@ mx/
 │   └── services/
 │       └── pingpong/                  # Example ping-pong service
 │           └── ping_pong.go
+├── mxtypes/                           # Core interfaces (shared, at module root)
+│   └── types.go                       # IService, HealthChecker, Enabler, ReadinessReporter, StateProvider, ServiceState
 ├── logger/                            # Structured logging
 │   ├── logger.go                      # New, NewExtended, With, WithExtended
 │   ├── interface.go                   # Logger, ExtendedLogger interfaces

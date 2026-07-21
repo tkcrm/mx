@@ -39,17 +39,25 @@
 // # Startup priority
 //
 // Services are started in ascending startup-priority groups. All services in a
-// group must reach the running state before the next group starts, while
-// services within a group start concurrently. This lets infrastructure such as
-// databases and message queues come up first, with the rest of the application
-// starting only once they are ready. Priority 0 (the default) starts last, after
-// every prioritized group is ready:
+// group must become ready before the next group starts, while services within a
+// group start concurrently. This lets infrastructure such as databases and
+// message queues come up first, with the rest of the application starting only
+// once they are ready. Priority 0 (the default) starts last, after every
+// prioritized group is ready:
 //
 //	ln.ServicesRunner().Register(
 //		launcher.NewService(launcher.WithService(db), launcher.WithStartupPriority(1)),
 //		launcher.NewService(launcher.WithService(queue), launcher.WithStartupPriority(1)),
 //		launcher.NewService(launcher.WithService(app)), // priority 0 → starts last
 //	)
+//
+// "Ready" is what a service reports through the optional
+// [github.com/tkcrm/mx/mxtypes.ReadinessReporter] interface (or the
+// [github.com/tkcrm/mx/launcher.WithReadiness] option): a database becomes ready
+// once it has connected, an HTTP server once it is listening. A service that
+// does not report readiness is considered ready as soon as its Start goroutine
+// is launched, so to truly gate a group behind infrastructure that service must
+// report readiness. StartupTimeout bounds the wait for this signal.
 //
 // Shutdown order is controlled independently via
 // [github.com/tkcrm/mx/launcher.WithRunnerServicesSequence] (None/Fifo/Lifo).

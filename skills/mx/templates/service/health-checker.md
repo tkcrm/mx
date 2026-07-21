@@ -1,6 +1,6 @@
 # Health Checker Service
 
-A service that implements both `lntypes.IService` and `lntypes.HealthChecker`. The ops health endpoint will periodically call `Healthy()` and report results on `/healthy`, `/livez`, and `/readyz`.
+A service that implements both `mxtypes.IService` and `mxtypes.HealthChecker`. The ops health endpoint will periodically call `Healthy()` and report results on `/healthy`, `/livez`, and `/readyz`.
 
 ## service.go
 
@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/tkcrm/mx/launcher/lntypes"
+	"github.com/tkcrm/mx/mxtypes"
 	"github.com/tkcrm/mx/logger"
 )
 
@@ -54,8 +54,8 @@ func (s *{SERVICE_STRUCT}) Healthy(_ context.Context) error {
 	return nil
 }
 
-var _ lntypes.IService = (*{SERVICE_STRUCT})(nil)
-var _ lntypes.HealthChecker = (*{SERVICE_STRUCT})(nil)
+var _ mxtypes.IService = (*{SERVICE_STRUCT})(nil)
+var _ mxtypes.HealthChecker = (*{SERVICE_STRUCT})(nil)
 ```
 
 > Note: When using `launcher.WithService(svc)`, the framework automatically detects the `HealthChecker` interface via duck-typing and registers it with the ops health checker. No extra wiring is needed — just implement the interface and register with `launcher.NewService(launcher.WithService(svc))`.

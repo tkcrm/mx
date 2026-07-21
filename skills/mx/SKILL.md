@@ -26,7 +26,7 @@ user-invocable: true
    - Ops (health, metrics, profiler) → see `templates/ops/`
 
 2. **Follow framework conventions**:
-   - Every service must implement `lntypes.IService` (Name, Start, Stop)
+   - Every service must implement `mxtypes.IService` (Name, Start, Stop)
    - Use the functional options pattern (`WithXxx` functions) for all configuration
    - Wrap services with `launcher.NewService(launcher.WithService(svc))` before registering
    - Register services via `launcher.ServicesRunner().Register(...)`
@@ -37,20 +37,20 @@ user-invocable: true
    - Create logger → create transports/services → create launcher with ops config → register services → call `launcher.Run()`
 
 5. **Validate the result**:
-   - Ensure all services implement `lntypes.IService`
-   - Confirm health checkers implement `lntypes.HealthChecker` if needed
+   - Ensure all services implement `mxtypes.IService`
+   - Confirm health checkers implement `mxtypes.HealthChecker` if needed
    - Check that `launcher.Run()` is the last call in main (it blocks)
 
 ## Key principles
 
-- **Interface-first**: Services are defined by `lntypes.IService`. Optional interfaces (`lntypes.HealthChecker`, `lntypes.Enabler`) are detected via duck-typing in `WithService()`.
+- **Interface-first**: Services are defined by `mxtypes.IService`. Optional interfaces (`mxtypes.HealthChecker`, `mxtypes.Enabler`) are detected via duck-typing in `WithService()`.
 - **Functional options everywhere**: All MX components use `Option func(*T)` pattern. Never set struct fields directly.
 - **Launcher is the orchestrator**: All services (transports, custom services, ops) are registered with and managed by the Launcher's ServicesRunner.
 - **Graceful shutdown by default**: The Launcher handles OS signals (SIGTERM, SIGINT, SIGQUIT). First signal triggers graceful shutdown; second signal forces exit.
 - **Ops are separate**: Health checks, metrics, and profiler run on a dedicated HTTP server (default port 10000), not on the application transport.
 - **Context flows down**: The Launcher creates a root context that is passed to all services. Services should respect `<-ctx.Done()` in their Start function.
 - **Restart policies are per-service**: Configure `RestartOnFailure` or `RestartAlways` with exponential backoff on individual services, not globally.
-- **Startup priority groups**: Services with `StartupPriority > 0` start in ascending group order (same priority = concurrent within group). All must be ready before the next group. Priority 0 (default) starts last, concurrently.
+- **Startup priority groups**: Services with `StartupPriority > 0` start in ascending group order (same priority = concurrent within group). All must be **ready** before the next group starts. A service reports readiness via `mxtypes.ReadinessReporter` (`Ready() <-chan struct{}`) or `WithReadiness(ch)`; one that doesn't is ready the instant its `Start` goroutine launches — so gate infrastructure (DB/queue) behind priority only if it reports readiness. `WithStartupTimeout` bounds that wait. Priority 0 (default) starts last, concurrently.
 
 ## Related files
 

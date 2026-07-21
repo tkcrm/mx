@@ -140,35 +140,21 @@ func (s *healthCheckerOpsService) Start(ctx context.Context) error {
 		go func(checker mxtypes.HealthChecker) {
 			defer wg.Done()
 
-			name := checker.Name()
 			delay := checker.Interval()
 
-			ticker := time.NewTimer(delay)
-			defer ticker.Stop()
+			// Poll immediately, then every interval, so a healthy service is
+			// reported ready right away instead of after a full interval of
+			// "starting".
+			timer := time.NewTimer(0)
+			defer timer.Stop()
 
 			for {
 				select {
 				case <-ctx.Done():
 					return
-				case <-ticker.C:
-					if err := checker.Healthy(ctx); err != nil { //nolint:nestif
-						if errors.Is(err, ErrHealthCheckServiceStarting) {
-							s.resp.Store(name, HealthCheckCodeServiceStarting)
-						} else {
-							s.resp.Store(name, HealthCheckCodeError)
-						}
-						s.log.Warnf("health check service %s failed with error: %s", name, err)
-					} else {
-						currentValue, existsValue := s.resp.Load(name)
-						s.resp.Store(name, HealthCheckCodeOk)
-						if existsValue {
-							if code, ok := currentValue.(HealthCheckCode); ok && code != HealthCheckCodeOk {
-								s.log.Infof("health check service %s fixed", name)
-							}
-						}
-					}
-
-					ticker.Reset(delay)
+				case <-timer.C:
+					s.poll(ctx, checker)
+					timer.Reset(delay)
 				}
 			}
 		}(s.config.servicesList[i])
@@ -179,6 +165,41 @@ func (s *healthCheckerOpsService) Start(ctx context.Context) error {
 	wg.Wait()
 
 	return nil
+}
+
+// poll runs a single health check and records the result, logging only on
+// meaningful transitions:
+//   - a service still starting up (reporting ErrHealthCheckServiceStarting) is
+//     recorded as "starting" and stays silent — that is expected, not an error;
+//   - a real failure is logged once, when the service first starts failing
+//     (subsequent failing polls do not repeat the warning);
+//   - recovery is logged once, when a previously failed service returns.
+func (s *healthCheckerOpsService) poll(ctx context.Context, checker mxtypes.HealthChecker) {
+	name := checker.Name()
+
+	prev := HealthCheckCodeServiceStarting
+	if v, ok := s.resp.Load(name); ok {
+		if code, ok := v.(HealthCheckCode); ok {
+			prev = code
+		}
+	}
+
+	err := checker.Healthy(ctx)
+	switch {
+	case err == nil:
+		s.resp.Store(name, HealthCheckCodeOk)
+		if prev == HealthCheckCodeError {
+			s.log.Infof("health check service %s recovered", name)
+		}
+	case errors.Is(err, ErrHealthCheckServiceStarting):
+		// Expected while the service is still starting up — not a failure.
+		s.resp.Store(name, HealthCheckCodeServiceStarting)
+	default:
+		s.resp.Store(name, HealthCheckCodeError)
+		if prev != HealthCheckCodeError {
+			s.log.Warnf("health check service %s failed: %s", name, err)
+		}
+	}
 }
 
 func (s *healthCheckerOpsService) Stop(_ context.Context) error { return nil }
