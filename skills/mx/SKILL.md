@@ -26,7 +26,7 @@ user-invocable: true
    - Ops (health, metrics, profiler) → see `templates/ops/`
 
 2. **Follow framework conventions**:
-   - Every service must implement `types.IService` (Name, Start, Stop)
+   - Every service must implement `lntypes.IService` (Name, Start, Stop)
    - Use the functional options pattern (`WithXxx` functions) for all configuration
    - Wrap services with `launcher.NewService(launcher.WithService(svc))` before registering
    - Register services via `launcher.ServicesRunner().Register(...)`
@@ -37,13 +37,13 @@ user-invocable: true
    - Create logger → create transports/services → create launcher with ops config → register services → call `launcher.Run()`
 
 5. **Validate the result**:
-   - Ensure all services implement `types.IService`
-   - Confirm health checkers implement `types.HealthChecker` if needed
+   - Ensure all services implement `lntypes.IService`
+   - Confirm health checkers implement `lntypes.HealthChecker` if needed
    - Check that `launcher.Run()` is the last call in main (it blocks)
 
 ## Key principles
 
-- **Interface-first**: Services are defined by `types.IService`. Optional interfaces (`types.HealthChecker`, `types.Enabler`) are detected via duck-typing in `WithService()`.
+- **Interface-first**: Services are defined by `lntypes.IService`. Optional interfaces (`lntypes.HealthChecker`, `lntypes.Enabler`) are detected via duck-typing in `WithService()`.
 - **Functional options everywhere**: All MX components use `Option func(*T)` pattern. Never set struct fields directly.
 - **Launcher is the orchestrator**: All services (transports, custom services, ops) are registered with and managed by the Launcher's ServicesRunner.
 - **Graceful shutdown by default**: The Launcher handles OS signals (SIGTERM, SIGINT, SIGQUIT). First signal triggers graceful shutdown; second signal forces exit.

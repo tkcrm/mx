@@ -5,8 +5,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/tkcrm/mx/launcher/types"
 	"github.com/tkcrm/mx/logger"
+	"github.com/tkcrm/mx/mxtypes"
 )
 
 const defaultServiceName = "unknown"
@@ -17,7 +17,7 @@ type ServiceOptions struct {
 
 	Name          string
 	Enabled       bool
-	HealthChecker types.HealthChecker
+	HealthChecker mxtypes.HealthChecker
 
 	StartFn func(ctx context.Context) error
 	StopFn  func(ctx context.Context) error
@@ -166,11 +166,11 @@ func WithService(svc any) ServiceOption {
 			o.StopFn = impl.Stop
 		}
 
-		if impl, ok := svc.(types.Enabler); ok {
+		if impl, ok := svc.(mxtypes.Enabler); ok {
 			o.Enabled = impl.Enabled()
 		}
 
-		if impl, ok := svc.(types.HealthChecker); ok {
+		if impl, ok := svc.(mxtypes.HealthChecker); ok {
 			o.HealthChecker = impl
 		}
 	}

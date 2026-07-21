@@ -101,13 +101,11 @@ func (l *launcher) Run() error { //nolint:cyclop
 	graceWait := new(sync.WaitGroup)
 
 	startSvc := func(svc *Service) {
-		graceWait.Add(1)
-		go func() {
-			defer graceWait.Done()
+		graceWait.Go(func() {
 			if err := svc.Start(); err != nil {
 				errChan <- fmt.Errorf("failed to start service [%s]: %w", svc.Name(), err)
 			}
-		}()
+		})
 	}
 
 	// start priority groups sequentially; within each group — concurrently

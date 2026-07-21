@@ -3,8 +3,8 @@ package launcher
 import (
 	"context"
 
-	"github.com/tkcrm/mx/launcher/types"
 	"github.com/tkcrm/mx/logger"
+	"github.com/tkcrm/mx/mxtypes"
 )
 
 type RunnerServicesSequence int
@@ -90,8 +90,8 @@ func (s *servicesRunner) Get(name string) (*Service, bool) {
 }
 
 // hcServices return services that implement the HealthChecker interface.
-func (s *servicesRunner) hcServices() []types.HealthChecker {
-	services := []types.HealthChecker{}
+func (s *servicesRunner) hcServices() []mxtypes.HealthChecker {
+	services := []mxtypes.HealthChecker{}
 	for _, svc := range s.services {
 		if svc.Options().HealthChecker != nil {
 			services = append(services, svc.Options().HealthChecker)
@@ -101,8 +101,8 @@ func (s *servicesRunner) hcServices() []types.HealthChecker {
 }
 
 // stateProviders returns all registered services as StateProvider.
-func (s *servicesRunner) stateProviders() []types.StateProvider {
-	providers := make([]types.StateProvider, len(s.services))
+func (s *servicesRunner) stateProviders() []mxtypes.StateProvider {
+	providers := make([]mxtypes.StateProvider, len(s.services))
 	for i, svc := range s.services {
 		providers[i] = svc
 	}

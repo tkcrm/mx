@@ -9,19 +9,19 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/tkcrm/mx/launcher/types"
 	"github.com/tkcrm/mx/logger"
+	"github.com/tkcrm/mx/mxtypes"
 	"github.com/tkcrm/mx/transport/http_transport"
 )
 
 type ops struct {
 	logger   logger.ExtendedLogger
 	config   Config
-	services []types.IService
+	services []mxtypes.IService
 }
 
 // New return list with ops services.
-func New(log logger.ExtendedLogger, cfg Config) []types.IService {
+func New(log logger.ExtendedLogger, cfg Config) []mxtypes.IService {
 	s := &ops{
 		logger: log,
 		config: cfg,
@@ -44,7 +44,7 @@ func New(log logger.ExtendedLogger, cfg Config) []types.IService {
 	}
 
 	if len(services) == 0 {
-		return []types.IService{}
+		return []mxtypes.IService{}
 	}
 
 	type muxServer struct {

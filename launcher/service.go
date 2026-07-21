@@ -5,20 +5,20 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/tkcrm/mx/launcher/types"
+	"github.com/tkcrm/mx/mxtypes"
 )
 
 // ServiceState is an alias for types.ServiceState for convenience.
-type ServiceState = types.ServiceState
+type ServiceState = mxtypes.ServiceState
 
 // Re-export ServiceState constants so callers don't need to import launcher/types.
 const (
-	ServiceStateIdle     = types.ServiceStateIdle
-	ServiceStateStarting = types.ServiceStateStarting
-	ServiceStateRunning  = types.ServiceStateRunning
-	ServiceStateStopping = types.ServiceStateStopping
-	ServiceStateStopped  = types.ServiceStateStopped
-	ServiceStateFailed   = types.ServiceStateFailed
+	ServiceStateIdle     = mxtypes.ServiceStateIdle
+	ServiceStateStarting = mxtypes.ServiceStateStarting
+	ServiceStateRunning  = mxtypes.ServiceStateRunning
+	ServiceStateStopping = mxtypes.ServiceStateStopping
+	ServiceStateStopped  = mxtypes.ServiceStateStopped
+	ServiceStateFailed   = mxtypes.ServiceStateFailed
 )
 
 // Service wraps a lifecycle-managed unit with Start/Stop functions and hooks.

@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tkcrm/mx/launcher/types"
 	"github.com/tkcrm/mx/logger"
+	"github.com/tkcrm/mx/mxtypes"
 	"github.com/tkcrm/mx/transport/http_transport"
 )
 
@@ -48,15 +48,15 @@ type HealthCheckerConfig struct {
 	// Empty string disables the endpoint.
 	ReadinessPath string `default:"/readyz" usage:"readiness probe path" example:"/readyz"`
 
-	servicesList []types.HealthChecker
-	statesList   []types.StateProvider
+	servicesList []mxtypes.HealthChecker
+	statesList   []mxtypes.StateProvider
 }
 
-func (s *HealthCheckerConfig) AddServicesList(list []types.HealthChecker) {
+func (s *HealthCheckerConfig) AddServicesList(list []mxtypes.HealthChecker) {
 	s.servicesList = list
 }
 
-func (s *HealthCheckerConfig) AddStateList(list []types.StateProvider) {
+func (s *HealthCheckerConfig) AddStateList(list []mxtypes.StateProvider) {
 	s.statesList = list
 }
 
@@ -86,7 +86,7 @@ func (s healthCheckerOpsService) Name() string { return "ops-health-checker" }
 // ServeHTTP implementation of http.Handler for OPS worker.
 func (s *healthCheckerOpsService) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
 	var existsErr, existsProcessing bool
-	out := make(map[string]interface{})
+	out := make(map[string]any)
 	s.resp.Range(func(key, val any) bool {
 		if name, ok := key.(string); ok {
 			out[name] = val
@@ -137,7 +137,7 @@ func (s *healthCheckerOpsService) Start(ctx context.Context) error {
 
 		s.resp.Store(s.config.servicesList[i].Name(), HealthCheckCodeServiceStarting)
 
-		go func(checker types.HealthChecker) {
+		go func(checker mxtypes.HealthChecker) {
 			defer wg.Done()
 
 			name := checker.Name()
@@ -212,7 +212,7 @@ func (s *healthCheckerOpsService) serveLiveness(w http.ResponseWriter, _ *http.R
 	for _, sp := range s.config.statesList {
 		state := sp.State()
 		services[sp.Name()] = state.String()
-		if state == types.ServiceStateFailed {
+		if state == mxtypes.ServiceStateFailed {
 			hasFailed = true
 		}
 	}
@@ -259,9 +259,9 @@ func (s *healthCheckerOpsService) serveReadiness(w http.ResponseWriter, _ *http.
 		entries[sp.Name()] = entry
 
 		switch state {
-		case types.ServiceStateFailed:
+		case mxtypes.ServiceStateFailed:
 			existsErr = true
-		case types.ServiceStateStarting, types.ServiceStateIdle:
+		case mxtypes.ServiceStateStarting, mxtypes.ServiceStateIdle:
 			existsStarting = true
 		}
 	}

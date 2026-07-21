@@ -11,7 +11,7 @@ package {PACKAGE_NAME}
 
 import (
     "context"
-    "github.com/tkcrm/mx/launcher/types"
+    "github.com/tkcrm/mx/launcher/lntypes"
     "github.com/tkcrm/mx/logger"
 )
 
@@ -36,12 +36,12 @@ func (s *{SERVICE_STRUCT}) Stop(_ context.Context) error {
 }
 
 // Compile-time interface check
-var _ types.IService = (*{SERVICE_STRUCT})(nil)
+var _ lntypes.IService = (*{SERVICE_STRUCT})(nil)
 ```
 
 ## 2. (Optional) Add health checking
 
-If the service needs health monitoring, implement `types.HealthChecker`:
+If the service needs health monitoring, implement `lntypes.HealthChecker`:
 
 ```go
 func (s *{SERVICE_STRUCT}) Interval() time.Duration {
@@ -53,19 +53,19 @@ func (s *{SERVICE_STRUCT}) Healthy(ctx context.Context) error {
     return nil
 }
 
-var _ types.HealthChecker = (*{SERVICE_STRUCT})(nil)
+var _ lntypes.HealthChecker = (*{SERVICE_STRUCT})(nil)
 ```
 
 ## 3. (Optional) Add enable/disable support
 
-Implement `types.Enabler` for conditional service registration:
+Implement `lntypes.Enabler` for conditional service registration:
 
 ```go
 func (s *{SERVICE_STRUCT}) Enabled() bool {
     return s.config.Enabled
 }
 
-var _ types.Enabler = (*{SERVICE_STRUCT})(nil)
+var _ lntypes.Enabler = (*{SERVICE_STRUCT})(nil)
 ```
 
 ## 4. Register with the launcher
@@ -140,7 +140,7 @@ ln.ServicesRunner().Register(
 
 ## 8. Verify
 
-- [ ] Service implements `types.IService` (Name, Start, Stop)
+- [ ] Service implements `lntypes.IService` (Name, Start, Stop)
 - [ ] Start function blocks until `ctx.Done()` or work completes
 - [ ] Stop function completes within `ShutdownTimeout` (default 10s)
 - [ ] Health checker returns meaningful errors (if implemented)

@@ -23,13 +23,13 @@ var (
 )
 
 // but using a string with the keys separated by `.`.
-func LookupString(i interface{}, path string) (reflect.Value, error) {
+func LookupString(i any, path string) (reflect.Value, error) {
 	return Lookup(i, strings.Split(path, SplitToken)...)
 }
 
 // LookupStringI is the same as LookupString, but the path is not case
 // sensitive.
-func LookupStringI(i interface{}, path string) (reflect.Value, error) {
+func LookupStringI(i any, path string) (reflect.Value, error) {
 	return LookupI(i, strings.Split(path, SplitToken)...)
 }
 
@@ -38,16 +38,16 @@ func LookupStringI(i interface{}, path string) (reflect.Value, error) {
 // to access a specific index. If one key owns to a slice and an index is not
 // specificied the rest of the path will be apllied to evaley value of the
 // slice, and the value will be merged into a slice.
-func Lookup(i interface{}, path ...string) (reflect.Value, error) {
+func Lookup(i any, path ...string) (reflect.Value, error) {
 	return lookup(i, false, path...)
 }
 
 // LookupI is the same as Lookup, but the path keys are not case sensitive.
-func LookupI(i interface{}, path ...string) (reflect.Value, error) {
+func LookupI(i any, path ...string) (reflect.Value, error) {
 	return lookup(i, true, path...)
 }
 
-func lookup(i interface{}, caseInsensitive bool, path ...string) (reflect.Value, error) {
+func lookup(i any, caseInsensitive bool, path ...string) (reflect.Value, error) {
 	value := reflect.ValueOf(i)
 	var parent reflect.Value
 	var err error
@@ -83,7 +83,7 @@ func getValueByName(v reflect.Value, key string, caseInsensitive bool) (reflect.
 		return value, err
 	}
 	switch v.Kind() {
-	case reflect.Ptr, reflect.Interface:
+	case reflect.Pointer, reflect.Interface:
 		return getValueByName(v.Elem(), prevKey, caseInsensitive)
 	case reflect.Struct:
 		value = v.FieldByName(key)
@@ -121,7 +121,7 @@ func getValueByName(v reflect.Value, key string, caseInsensitive bool) (reflect.
 	}
 
 	if index != -1 {
-		if value.Kind() == reflect.Ptr {
+		if value.Kind() == reflect.Pointer {
 			value = value.Elem()
 		}
 
@@ -136,7 +136,7 @@ func getValueByName(v reflect.Value, key string, caseInsensitive bool) (reflect.
 		value = value.Index(index)
 	}
 
-	if value.Kind() == reflect.Ptr || value.Kind() == reflect.Interface {
+	if value.Kind() == reflect.Pointer || value.Kind() == reflect.Interface {
 		value = value.Elem()
 	}
 
@@ -271,7 +271,7 @@ func lookupType(ty reflect.Type, path ...string) (reflect.Type, bool) {
 		}
 		// Aggregate.
 		return lookupType(ty.Elem(), path...)
-	case reflect.Ptr:
+	case reflect.Pointer:
 		return lookupType(ty.Elem(), path...)
 	case reflect.Interface:
 		// We can't know from here without a value. Let's just return this type.

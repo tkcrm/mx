@@ -1,6 +1,6 @@
 # gRPC Server
 
-Sets up a gRPC transport server using `grpc_transport.NewServer()`. The server implements `types.IService` and supports interceptors, health checks, and reflection.
+Sets up a gRPC transport server using `grpc_transport.NewServer()`. The server implements `lntypes.IService` and supports interceptors, health checks, and reflection.
 
 ## GRPCService Interface
 

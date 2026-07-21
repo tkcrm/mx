@@ -1,6 +1,6 @@
 # HTTP Server
 
-Sets up an HTTP transport server using `http_transport.NewServer()`. The server implements `types.IService` and can be registered with the launcher.
+Sets up an HTTP transport server using `http_transport.NewServer()`. The server implements `lntypes.IService` and can be registered with the launcher.
 
 ## Basic Setup
 

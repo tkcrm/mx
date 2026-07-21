@@ -8,7 +8,7 @@ MX is a composable Go microservices framework built around a central **Launcher*
 
 ### IService (required)
 
-Every service must implement this interface from `launcher/types`:
+Every service must implement this interface from `launcher/lntypes`:
 
 ```go
 type IService interface {
@@ -126,7 +126,7 @@ RestartAlways    // restart on any exit (error or clean)
 - `Name() string` → sets service name
 - `Start(ctx context.Context) error` → sets start function
 - `Stop(ctx context.Context) error` → sets stop function
-- `Enabled() bool` (types.Enabler) → sets enabled state
+- `Enabled() bool` (lntypes.Enabler) → sets enabled state
 - `HealthChecker` interface → registers health checker
 
 This allows wrapping any struct without requiring explicit interface satisfaction at compile time.
