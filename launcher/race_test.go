@@ -28,9 +28,7 @@ func TestService_State_ConcurrentReads_NoRace(t *testing.T) {
 	stop := make(chan struct{})
 	var readers sync.WaitGroup
 	for range 4 {
-		readers.Add(1)
-		go func() {
-			defer readers.Done()
+		readers.Go(func() {
 			for {
 				select {
 				case <-stop:
@@ -39,7 +37,7 @@ func TestService_State_ConcurrentReads_NoRace(t *testing.T) {
 					_ = svc.State()
 				}
 			}
-		}()
+		})
 	}
 
 	// Writer: the service goroutine transitions Starting → Running (and later

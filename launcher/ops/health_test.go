@@ -259,7 +259,7 @@ func TestHealthChecker_InitService_Routes(t *testing.T) {
 		if err != nil {
 			t.Fatalf("GET %s: %v", path, err)
 		}
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		if resp.StatusCode != http.StatusOK {
 			t.Errorf("GET %s status = %d; want 200", path, resp.StatusCode)
 		}
@@ -285,7 +285,7 @@ func TestHealthChecker_InitService_ProbesDisabled(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("/healthy status = %d; want 200", resp.StatusCode)
 	}
@@ -295,7 +295,7 @@ func TestHealthChecker_InitService_ProbesDisabled(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	if resp.StatusCode != http.StatusNotFound {
 		t.Errorf("/livez status = %d; want 404 (disabled)", resp.StatusCode)
 	}

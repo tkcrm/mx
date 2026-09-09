@@ -122,8 +122,8 @@ func TestOpsNew_ProfilerWithWriteTimeout_AppendsHTTPOptions(t *testing.T) {
 	if srv == nil {
 		t.Fatal("no http server returned")
 	}
-	if srv.Config.WriteTimeout != 30 {
-		t.Errorf("WriteTimeout = %d; want 30 (applied from profiler http option)", srv.Config.WriteTimeout)
+	if srv.WriteTimeout != 30 {
+		t.Errorf("WriteTimeout = %d; want 30 (applied from profiler http option)", srv.WriteTimeout)
 	}
 }
 
@@ -133,20 +133,20 @@ func TestConfig_GetHTTPOptionForPort(t *testing.T) {
 
 	// Apply the option to a real server and check the resulting config.
 	srv := http_transport.NewServer(opt)
-	if srv.Config.Address != ":9999" {
-		t.Errorf("Address = %q; want :9999", srv.Config.Address)
+	if srv.Address != ":9999" {
+		t.Errorf("Address = %q; want :9999", srv.Address)
 	}
-	if srv.Config.Network != "tcp" {
-		t.Errorf("Network = %q; want tcp", srv.Config.Network)
+	if srv.Network != "tcp" {
+		t.Errorf("Network = %q; want tcp", srv.Network)
 	}
-	if srv.Config.NoTrace {
+	if srv.NoTrace {
 		t.Error("NoTrace = true; want false (tracing enabled)")
 	}
 
 	// Tracing disabled → NoTrace true.
 	cfg.TracingEnabled = false
 	srv2 := http_transport.NewServer(cfg.getHTTPOptionForPort("9999"))
-	if !srv2.Config.NoTrace {
+	if !srv2.NoTrace {
 		t.Error("NoTrace = false; want true (tracing disabled)")
 	}
 }
@@ -181,7 +181,7 @@ func TestMetricsOpsService_ServesMetrics(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("/metrics status = %d; want 200", resp.StatusCode)
 	}
@@ -205,7 +205,7 @@ func TestMetricsOpsService_BasicAuth(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	if resp.StatusCode != http.StatusUnauthorized {
 		t.Errorf("no-auth status = %d; want 401", resp.StatusCode)
 	}
@@ -217,7 +217,7 @@ func TestMetricsOpsService_BasicAuth(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("auth status = %d; want 200", resp.StatusCode)
 	}
@@ -265,7 +265,7 @@ func TestProfilerOpsService_ServesPprof(t *testing.T) {
 		if err != nil {
 			t.Fatalf("GET %s: %v", path, err)
 		}
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		if resp.StatusCode != http.StatusOK {
 			t.Errorf("GET %s status = %d; want 200", path, resp.StatusCode)
 		}
